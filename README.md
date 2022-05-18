@@ -30,6 +30,8 @@ ln -s ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transform
 * [maim](https://github.com/naelstrof/maim)
 * [xclip](https://github.com/astrand/xclip)
 
+`~/.local/bin` should be added to the PATH.
+
 </details>
 
 ## Setup
