@@ -1,5 +1,7 @@
 # transformers_ocr
 
+> https://tatsumoto.neocities.org/blog/mining-from-manga.html
+
 [![AUR](https://img.shields.io/badge/AUR-install-blue)](https://aur.archlinux.org/packages/transformers_ocr)
 [![Chat](https://img.shields.io/badge/chat-join-green)](https://tatsumoto-ren.github.io/blog/join-our-community.html)
 ![GitHub](https://img.shields.io/github/license/Ajatt-Tools/transformers_ocr)
