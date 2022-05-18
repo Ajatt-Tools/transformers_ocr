@@ -97,7 +97,7 @@ main() {
 	prepare_pipe
 	case ${1-} in
 		download) download_manga_ocr ;;
-		start) ensure_listening ;;
+		start|listen) ensure_listening ;;
 		stop) stop_listening ;;
 		recognize) run_ocr ;;
 		help|-h|--help) help ;;
