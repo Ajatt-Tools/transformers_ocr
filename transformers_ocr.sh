@@ -36,8 +36,7 @@ download_manga_ocr() {
 }
 
 take_screenshot() {
-	maim --select --hidecursor --format=png --quality 1 |
-		convert png:- -alpha off -bordercolor White -border 10x10 png:-
+	maim --select --hidecursor --format=png --quality 1
 }
 
 prepare_pipe() {
@@ -94,7 +93,7 @@ help() {
 }
 
 main() {
-	if_installed maim convert xclip || exit 1
+	if_installed maim xclip || exit 1
 	prepare_pipe
 	case ${1-} in
 		download) download_manga_ocr ;;

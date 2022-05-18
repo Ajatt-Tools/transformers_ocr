@@ -10,13 +10,25 @@ An OCR tool using maim with Transformers.
 
 Install [from the AUR](https://aur.archlinux.org/packages/transformers_ocr).
 
-To install manually, run:
+<details>
+
+<summary>To install manually</summary>
+
+The steps below are for people who can't access the AUR.
 
 ```
 mkdir -p ~/.local/share/transformers_ocr
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git' ~/.local/share/transformers_ocr
 ln -s ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transformers_ocr
 ```
+
+`transformers_ocr` depends on:
+
+* [pip](https://pypi.org/project/pip/)
+* [maim](https://github.com/naelstrof/maim)
+* [xclip](https://github.com/astrand/xclip)
+
+</details>
 
 ## Setup
 
