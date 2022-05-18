@@ -52,20 +52,21 @@ prepare_pipe() {
 run_ocr() {
 	ensure_listening
 	local -r screenshot_path=$(mktemp /tmp/screenshot.XXXXXX)
-	if [[ -d $MANGA_OCR_PREFIX ]]; then
-		take_screenshot >"$screenshot_path"
-		echo "$screenshot_path" >"$PIPE_PATH" &
-	else
-		notify "manga-ocr is not downloaded."
-	fi
+	take_screenshot >"$screenshot_path"
+	echo "$screenshot_path" >"$PIPE_PATH" &
 }
 
 ensure_listening() {
-	local -r pid=$(cat -- "$PID_FILE")
-	if ! kill -0 "$pid"; then
-		echo "Starting manga_ocr listener."
-		"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$THIS_DIR/listener.py" &
-		echo $! >"$PID_FILE"
+	if [[ -d $MANGA_OCR_PREFIX ]]; then
+		local -r pid=$(cat -- "$PID_FILE")
+		if ! kill -0 "$pid"; then
+			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$THIS_DIR/listener.py" &
+			echo $! >"$PID_FILE"
+			notify "Started manga_ocr listener."
+		fi
+	else
+		notify "manga-ocr is not downloaded."
+		exit 1
 	fi
 }
 
@@ -97,10 +98,10 @@ main() {
 	prepare_pipe
 	case ${1-} in
 		download) download_manga_ocr ;;
-		start|listen) ensure_listening ;;
+		start | listen) ensure_listening ;;
 		stop) stop_listening ;;
 		recognize) run_ocr ;;
-		help|-h|--help) help ;;
+		help | -h | --help) help ;;
 		*) echo "Unknown command." && help ;;
 	esac
 }
