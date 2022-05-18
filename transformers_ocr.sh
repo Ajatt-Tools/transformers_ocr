@@ -72,9 +72,9 @@ ensure_listening() {
 
 stop_listening() {
 	local -r pid=$(cat -- "$PID_FILE")
-	if [[ -n $pid ]] && kill -0 "$pid"; then
+	if [[ -n $pid ]] && kill -0 "$pid" >/dev/null 2>&1; then
 		echo '[[stop]]' >"$PIPE_PATH" &
-		(sleep 1s && kill -SIGTERM "$pid")
+		(sleep 1s && kill -SIGTERM "$pid") >/dev/null 2>&1
 	fi
 }
 
