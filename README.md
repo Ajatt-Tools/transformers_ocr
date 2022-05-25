@@ -21,7 +21,7 @@ The steps below are for people who can't access the AUR.
 ```
 mkdir -p ~/.local/share/transformers_ocr
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git' ~/.local/share/transformers_ocr
-ln -s ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transformers_ocr
+ln -sr ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transformers_ocr
 ```
 
 `transformers_ocr` depends on:
