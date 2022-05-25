@@ -6,7 +6,7 @@
 set -euo pipefail
 
 readonly \
-	THIS_DIR=$(dirname -- "$(readlink -f "$0")") \
+	THIS_DIR=$(dirname -- "$(readlink -f -- "$0")") \
 	MANGA_OCR_PREFIX=$HOME/.local/share/manga_ocr \
 	PIPE_PATH='/tmp/manga_ocr.fifo' \
 	PID_FILE='/tmp/manga_ocr.pid'
