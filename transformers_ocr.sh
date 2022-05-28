@@ -62,6 +62,8 @@ ensure_listening() {
 			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$THIS_DIR/listener.py" &
 			echo $! >"$PID_FILE"
 			echo "Started manga_ocr listener."
+		else
+			echo "Already running."
 		fi
 	else
 		notify "manga-ocr is not downloaded."
