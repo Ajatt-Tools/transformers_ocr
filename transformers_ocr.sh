@@ -6,10 +6,13 @@
 set -euo pipefail
 
 readonly \
-	THIS_DIR=$(dirname -- "$(readlink -f -- "$0")") \
 	MANGA_OCR_PREFIX=$HOME/.local/share/manga_ocr \
 	PIPE_PATH='/tmp/manga_ocr.fifo' \
 	PID_FILE='/tmp/manga_ocr.pid'
+
+ocr_lib_dir() {
+	dirname -- "$(readlink -f -- "$0")"
+}
 
 notify() {
 	echo "$*"
@@ -59,7 +62,7 @@ ensure_listening() {
 	if [[ -d $MANGA_OCR_PREFIX ]]; then
 		local -r pid=$(cat -- "$PID_FILE")
 		if ! kill -0 "$pid"; then
-			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$THIS_DIR/listener.py" &
+			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$(ocr_lib_dir)/listener.py" &
 			echo $! >"$PID_FILE"
 			echo "Started manga_ocr listener."
 		else
