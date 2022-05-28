@@ -6,31 +6,46 @@
 [![Chat](https://img.shields.io/badge/chat-join-green)](https://tatsumoto-ren.github.io/blog/join-our-community.html)
 ![GitHub](https://img.shields.io/github/license/Ajatt-Tools/transformers_ocr)
 
-An OCR tool using maim with Transformers.
+An OCR tool using `maim` with `Transformers`.
 
 ## Installation
 
 Install [from the AUR](https://aur.archlinux.org/packages/transformers_ocr).
 
-<details>
-
-<summary>To install manually</summary>
+### To install manually
 
 The steps below are for people who can't access the AUR.
+
+Install the following dependencies if they are not installed.
+
+* [pip](https://pypi.org/project/pip/)
+* [maim](https://github.com/naelstrof/maim)
+* [xclip](https://github.com/astrand/xclip)
+
+<details>
+
+<summary>Install using Makefile</summary>
+
+```
+git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git'
+cd -- 'transformers_ocr'
+sudo make install
+```
+
+</details>
+
+<details>
+
+<summary>Install without Makefile</summary>
+
+These steps install the program to `~/.local/bin`.
+`~/.local/bin` should be added to the PATH.
 
 ```
 mkdir -p ~/.local/share/transformers_ocr
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git' ~/.local/share/transformers_ocr
 ln -sr ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transformers_ocr
 ```
-
-`transformers_ocr` depends on:
-
-* [pip](https://pypi.org/project/pip/)
-* [maim](https://github.com/naelstrof/maim)
-* [xclip](https://github.com/astrand/xclip)
-
-`~/.local/bin` should be added to the PATH.
 
 </details>
 
