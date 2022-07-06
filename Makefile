@@ -1,4 +1,5 @@
 PROG = transformers_ocr
+SHORT_PROG = trocr
 PREFIX ?= /usr
 
 all:
@@ -8,7 +9,8 @@ install:
 	install -Dm644 ./*.py -t "$(PREFIX)/lib/$(PROG)"
 	install -Dm755 ./*.sh -t "$(PREFIX)/lib/$(PROG)"
 	install -d "$(PREFIX)/bin"
-	ln -sr "$(PREFIX)/lib/$(PROG)/$(PROG).sh" "$(PREFIX)/bin/$(PROG)"
+	ln -sr -- "$(PREFIX)/lib/$(PROG)/$(PROG).sh" "$(PREFIX)/bin/$(PROG)"
+	ln -sr -- "$(PREFIX)/lib/$(PROG)/$(PROG).sh" "$(PREFIX)/bin/$(SHORT_PROG)"
 
 uninstall:
 	rm -- "$(PREFIX)/bin/$(PROG)"
