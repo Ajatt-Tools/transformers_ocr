@@ -8,6 +8,8 @@
 
 An OCR tool using `maim` with `Transformers`.
 
+https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-9985-5801d9685bd6.mp4
+
 ## Installation
 
 Install [from the AUR](https://aur.archlinux.org/packages/transformers_ocr).
