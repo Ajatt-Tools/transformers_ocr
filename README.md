@@ -1,4 +1,4 @@
-# transformers_ocr
+# transformers ocr
 
 > https://tatsumoto.neocities.org/blog/mining-from-manga.html
 
