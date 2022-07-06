@@ -13,7 +13,7 @@ install:
 	ln -sr -- "$(PREFIX)/lib/$(PROG)/$(PROG).sh" "$(PREFIX)/bin/$(SHORT_PROG)"
 
 uninstall:
-	rm -- "$(PREFIX)/bin/$(PROG)"
+	rm -- "$(PREFIX)/bin/$(PROG)" "$(PREFIX)/bin/$(SHORT_PROG)"
 	rm -rf -- "$(PREFIX)/lib/$(PROG)"
 
 .PHONY: install uninstall
