@@ -16,7 +16,7 @@ ocr_lib_dir() {
 
 notify() {
 	echo "$*"
-	notify-send "Maim OCR" "$*"
+	notify-send "Maim OCR" "$*" &
 }
 
 if_installed() {
