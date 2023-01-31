@@ -66,6 +66,8 @@ The files will be saved to `~/.local/share/manga_ocr`.
 
 ## Usage
 
+To show a help page, run `transformers_ocr help`.
+
 To OCR text in on a manga page, run:
 
 ```

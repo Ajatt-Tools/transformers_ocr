@@ -63,14 +63,30 @@ run_ocr() {
 	echo "$screenshot_path" >"$PIPE_PATH" &
 }
 
+get_pid() {
+	local -r pid=$(cat -- "$PID_FILE")
+	if [[ -n $pid ]] && kill -0 "$pid" >/dev/null 2>&1; then
+		echo "$pid"
+	else
+		echo "none"
+	fi
+}
+
+report_status() {
+	if [[ $(get_pid) != none ]]; then
+		notify "Running."
+	else
+		notify "Stopped."
+	fi
+}
+
 ensure_listening() {
 	if [[ -d $MANGA_OCR_PREFIX ]]; then
-		local -r pid=$(cat -- "$PID_FILE")
-		if ! kill -0 "$pid"; then
+		if [[ $(get_pid) == none ]]; then
 			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$(ocr_lib_dir)/listener.py" &
 			echo $! >"$PID_FILE"
 			echo "Started manga_ocr listener."
-			disown
+			disown -a
 		else
 			echo "Already running."
 		fi
@@ -81,10 +97,12 @@ ensure_listening() {
 }
 
 stop_listening() {
-	local -r pid=$(cat -- "$PID_FILE")
-	if [[ -n $pid ]] && kill -0 "$pid" >/dev/null 2>&1; then
+	local -r pid=$(get_pid)
+	if [[ $pid != none ]]; then
 		echo '[[stop]]' >"$PIPE_PATH" &
 		(sleep 1s && kill -SIGTERM "$pid") >/dev/null 2>&1
+	else
+		notify "Already stopped."
 	fi
 }
 
@@ -99,6 +117,7 @@ help() {
 		download|Download manga-ocr files.
 		start|Start listening.
 		stop|Stop listening.
+		status|Print listening status.
 		help|Show this help screen.
 	EOF
 }
@@ -110,6 +129,7 @@ main() {
 	download) download_manga_ocr ;;
 	start | listen) ensure_listening ;;
 	stop) stop_listening ;;
+	status) report_status ;;
 	recognize) run_ocr ;;
 	help | -h | --help) help ;;
 	*) echo "Unknown command." && help ;;
