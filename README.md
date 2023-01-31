@@ -73,12 +73,20 @@ transformers_ocr recognize
 ```
 
 Bind the command to a keyboard shortcut using your WM's config.
+This enables you to call the OCR from anywhere, as shown in the demo video.
+
+For example, if you use [i3wm](https://i3wm.org/),
+add this line to the [config file](https://i3wm.org/docs/userguide.html#configuring).
+
+```
+bindsym $mod+o  exec --no-startup-id transformers_ocr recognize
+```
 
 The first run will take longer than usual.
-There's additional files that will be downloaded and saved to `~/.cache/huggingface`.
+There are additional files that will be downloaded and saved to `~/.cache/huggingface`.
 
-On the first run `transformers_ocr` launches a listener process that is running is the background
-and reads any new screenshots passed to it.
+On the first run `transformers_ocr` launches a listener process
+that is running is the background and reads any new screenshots passed to it.
 To speed up the first run, add the command below to autostart (using `~/.profile`, `~/.xinitrc`, etc.).
 
 ```
