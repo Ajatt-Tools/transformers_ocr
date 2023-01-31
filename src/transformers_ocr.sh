@@ -6,12 +6,17 @@
 set -euo pipefail
 
 readonly \
+	PROGRAM=transformers_ocr \
 	MANGA_OCR_PREFIX=$HOME/.local/share/manga_ocr \
 	PIPE_PATH='/tmp/manga_ocr.fifo' \
 	PID_FILE='/tmp/manga_ocr.pid'
 
+this_bin_dir() {
+	dirname -- "$(readlink -e -- "$0")"
+}
+
 ocr_lib_dir() {
-	dirname -- "$(readlink -f -- "$0")"
+	readlink -e -- "$(this_bin_dir)/../lib/$PROGRAM"
 }
 
 notify() {
@@ -65,6 +70,7 @@ ensure_listening() {
 			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$(ocr_lib_dir)/listener.py" &
 			echo $! >"$PID_FILE"
 			echo "Started manga_ocr listener."
+			disown
 		else
 			echo "Already running."
 		fi
