@@ -12,6 +12,8 @@ https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-
 
 ## Installation
 
+### Arch Linux and Arch-based distros
+
 Install [from the AUR](https://aur.archlinux.org/packages/transformers_ocr).
 
 ### To install manually
