@@ -8,6 +8,8 @@ from typing import AnyStr
 from manga_ocr import MangaOcr
 
 PIPE_PATH = '/tmp/manga_ocr.fifo'
+IS_XORG = 'WAYLAND_DISPLAY' not in os.environ
+CLIP_COPY_ARGS = ('xclip', '-selection', 'clipboard',) if IS_XORG else ('wl-copy',)
 
 
 def is_fifo(path: AnyStr) -> bool:
@@ -19,7 +21,7 @@ def is_fifo(path: AnyStr) -> bool:
 
 
 def to_clip(text: str):
-    p = subprocess.Popen(('xclip', '-selection', 'clipboard',), stdin=subprocess.PIPE)
+    p = subprocess.Popen(CLIP_COPY_ARGS, stdin=subprocess.PIPE)
     p.communicate(input=text.encode())
 
 

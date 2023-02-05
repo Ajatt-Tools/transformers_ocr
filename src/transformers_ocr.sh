@@ -19,6 +19,10 @@ ocr_lib_dir() {
 	readlink -e -- "$(this_bin_dir)/../lib/$PROGRAM"
 }
 
+is_Xorg() {
+	[[ ${WAYLAND_DISPLAY:-None} == None ]]
+}
+
 notify() {
 	echo "$*"
 	notify-send "Maim OCR" "$*" &
@@ -43,9 +47,19 @@ download_manga_ocr() {
 	echo "Downloaded manga-ocr."
 }
 
-take_screenshot() {
-	maim --select --hidecursor --format=png --quality 1
-}
+if is_Xorg; then
+	if_installed maim xclip || exit 1
+
+	take_screenshot() {
+		maim --select --hidecursor --format=png --quality 1
+	}
+else
+	if_installed grim slurp wl-copy || exit 1
+
+	take_screenshot() {
+		grim -g "$(slurp)"
+	}
+fi
 
 prepare_pipe() {
 	if [[ -f $PIPE_PATH ]]; then
@@ -123,7 +137,6 @@ help() {
 }
 
 main() {
-	if_installed maim xclip || exit 1
 	prepare_pipe
 	case ${1-} in
 	download) download_manga_ocr ;;
