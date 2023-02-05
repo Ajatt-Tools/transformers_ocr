@@ -1,8 +1,9 @@
 #!/bin/bash
 
-PROG=transformers_ocr
+echo -e "\033[1;32mThis script is for testing purposes. Run \"sudo make install\" instead.\033[0m"
+
 THIS=$(dirname -- "$(readlink -f -- "$0")")
 
-make "PREFIX=$THIS/$PROG" install
+make "PREFIX=$THIS/out" install
 
-"$THIS/$PROG/bin/$PROG" "$@"
+"$THIS/out/bin/transformers_ocr" "$@"
