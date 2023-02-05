@@ -22,9 +22,18 @@ The steps below are for people who can't access the AUR.
 
 Install the following dependencies if they are not installed.
 
+**Xorg:**
+
 * [pip](https://pypi.org/project/pip/)
 * [maim](https://github.com/naelstrof/maim)
 * [xclip](https://github.com/astrand/xclip)
+
+**Wayland:**
+
+* [pip](https://pypi.org/project/pip/)
+* [grim](https://git.sr.ht/~emersion/grim)
+* [slurp](https://github.com/emersion/slurp)
+* [wl-copy](https://github.com/bugaevc/wl-clipboard)
 
 <details>
 
