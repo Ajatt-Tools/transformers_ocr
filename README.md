@@ -6,7 +6,8 @@
 [![Chat](https://img.shields.io/badge/chat-join-green)](https://tatsumoto-ren.github.io/blog/join-our-community.html)
 ![GitHub](https://img.shields.io/github/license/Ajatt-Tools/transformers_ocr)
 
-An OCR tool using `maim` with `Transformers`.
+An OCR tool for the GNU operating system that uses `Transformers`.
+Supports Xorg and Wayland.
 
 https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-9985-5801d9685bd6.mp4
 
@@ -15,6 +16,12 @@ https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-
 ### Arch Linux and Arch-based distros
 
 Install [from the AUR](https://aur.archlinux.org/packages/transformers_ocr).
+
+### Other distros
+
+If you want to package this program for your distribution and know how to do it,
+please create a pull request.
+Otherwise, read the section below.
 
 ### To install manually
 
