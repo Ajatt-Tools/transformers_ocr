@@ -53,11 +53,19 @@ if is_Xorg; then
 	take_screenshot() {
 		maim --select --hidecursor --format=png --quality 1
 	}
+
+	print_platform() {
+		echo "Xorg"
+	}
 else
 	if_installed grim slurp wl-copy || exit 1
 
 	take_screenshot() {
 		grim -g "$(slurp)"
+	}
+
+	print_platform() {
+		echo "Wayland"
 	}
 fi
 
@@ -82,21 +90,25 @@ get_pid() {
 	if [[ -n $pid ]] && kill -0 "$pid" >/dev/null 2>&1; then
 		echo "$pid"
 	else
-		echo "none"
+		echo "None"
+	fi
+}
+
+print_status() {
+	if [[ $(get_pid) != None ]]; then
+		echo "Running"
+	else
+		echo "Stopped"
 	fi
 }
 
 report_status() {
-	if [[ $(get_pid) != none ]]; then
-		notify "Running."
-	else
-		notify "Stopped."
-	fi
+	echo "$(print_status), $(print_platform)."
 }
 
 ensure_listening() {
 	if [[ -d $MANGA_OCR_PREFIX ]]; then
-		if [[ $(get_pid) == none ]]; then
+		if [[ $(get_pid) == None ]]; then
 			"$MANGA_OCR_PREFIX/pyenv/bin/python3" "$(ocr_lib_dir)/listener.py" &
 			echo $! >"$PID_FILE"
 			echo "Started manga_ocr listener."
@@ -112,7 +124,7 @@ ensure_listening() {
 
 stop_listening() {
 	local -r pid=$(get_pid)
-	if [[ $pid != none ]]; then
+	if [[ $pid != None ]]; then
 		echo '[[stop]]' >"$PIPE_PATH" &
 		(sleep 1s && kill -SIGTERM "$pid") >/dev/null 2>&1
 	else
@@ -121,19 +133,25 @@ stop_listening() {
 }
 
 help() {
-	echo "Usage: $(basename -- "$0") [COMMAND]"
+	local -r prog=$(basename -- "$0")
+
+	echo "Usage: $prog [COMMAND]"
 	echo
-	echo "An OCR script that uses maim and manga-ocr."
+	echo "An OCR tool that uses Transformers."
 	echo
 	echo "Options:"
 	column -t -s'|' <<-EOF
 		recognize|OCR a part of the screen.
-		download|Download manga-ocr files.
+		download|Download OCR files.
 		start|Start listening.
 		stop|Stop listening.
 		status|Print listening status.
 		help|Show this help screen.
 	EOF
+	echo
+	echo "Platform: $(print_platform)"
+	echo "You need to run '$prog download' once after installation."
+	echo "$prog home page: https://github.com/Ajatt-Tools/transformers_ocr"
 }
 
 main() {
