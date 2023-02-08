@@ -1,5 +1,4 @@
 PROG = transformers_ocr
-LISTENER = listener.py
 SHORT_PROG = trocr
 PREFIX ?= /usr
 
