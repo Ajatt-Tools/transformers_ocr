@@ -31,7 +31,7 @@ notify() {
 if_installed() {
 	for x in "$@"; do
 		if ! which "$x" >/dev/null 2>&1 && ! pacman -Qq "$x" >/dev/null 2>&1; then
-			notify "$x must be installed for this function."
+			notify "$x must be installed for $PROGRAM to work."
 			return 1
 		fi
 	done
