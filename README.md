@@ -29,45 +29,34 @@ The steps below are for people who can't access the AUR.
 
 Install the following dependencies if they are not installed.
 
-**Xorg:**
+<details>
+
+<summary>Xorg</summary>
 
 * [pip](https://pypi.org/project/pip/)
 * [maim](https://github.com/naelstrof/maim)
 * [xclip](https://github.com/astrand/xclip)
 
-**Wayland:**
+</details>
+
+<details>
+
+<summary>Wayland</summary>
 
 * [pip](https://pypi.org/project/pip/)
 * [grim](https://git.sr.ht/~emersion/grim)
 * [slurp](https://github.com/emersion/slurp)
 * [wl-copy](https://github.com/bugaevc/wl-clipboard)
 
-<details>
+</details>
 
-<summary>Install using Makefile</summary>
+**Install using Makefile:**
 
 ```
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git'
 cd -- 'transformers_ocr'
 sudo make install
 ```
-
-</details>
-
-<details>
-
-<summary>Install without Makefile</summary>
-
-These steps install the program to `~/.local/bin`.
-`~/.local/bin` should be added to the PATH.
-
-```
-mkdir -p ~/.local/share/transformers_ocr
-git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git' ~/.local/share/transformers_ocr
-ln -sr ~/.local/share/transformers_ocr/transformers_ocr.sh ~/.local/bin/transformers_ocr
-```
-
-</details>
 
 ## Setup
 
