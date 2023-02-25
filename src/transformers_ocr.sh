@@ -61,7 +61,7 @@ else
 	if_installed grim slurp wl-copy || exit 1
 
 	take_screenshot() {
-		grim -g "$(slurp)"
+		grim -g "$(slurp)" -
 	}
 
 	print_platform() {
