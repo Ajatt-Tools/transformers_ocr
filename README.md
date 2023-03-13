@@ -99,3 +99,34 @@ To speed up the first run, add the command below to autostart (using `~/.profile
 ```
 transformers_ocr start
 ```
+
+## Config file
+
+Optionally, you can create a config file.
+
+```
+mkdir -p ~/.config/transformers_ocr
+touch ~/.config/transformers_ocr/config
+```
+
+## Send text to an external application
+
+Instead of copying text to the clipboard,
+you may want to pass it as an argument to an external application.
+In the example below `clip_command` is set to `goldendict`
+which allows you to send recognized text directly to GoldenDict
+and keep the system clipboard for other tasks.
+
+```
+echo 'clip_command=goldendict' >> ~/.config/transformers_ocr/config
+transformers_ocr stop
+transformers_ocr start
+```
+
+## Force CPU
+
+If you want to force CPU.
+
+```
+echo 'force_cpu=yes' >> ~/.config/transformers_ocr/config
+```
