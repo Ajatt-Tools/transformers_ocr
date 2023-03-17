@@ -50,11 +50,15 @@ def prepare_pipe():
         os.mkfifo(PIPE_PATH)
 
 
+def is_valid_key_val_pair(line: str) -> bool:
+    return '=' in line and not line.startswith('#')
+
+
 def get_config() -> dict[str, str]:
     config = {}
     if os.path.isfile(CONFIG_PATH):
         with open(CONFIG_PATH, encoding='utf8') as f:
-            for line in f.read().splitlines():
+            for line in filter(is_valid_key_val_pair, f.read().splitlines()):
                 key, value = line.split("=", maxsplit=1)
                 config[key] = value
     return config

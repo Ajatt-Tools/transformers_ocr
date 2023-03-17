@@ -109,6 +109,9 @@ mkdir -p ~/.config/transformers_ocr
 touch ~/.config/transformers_ocr/config
 ```
 
+Each line must have this format: `key=value`.
+Lines that start with `#` are ignored.
+
 ## Send text to an external application
 
 Instead of copying text to the clipboard,
