@@ -64,29 +64,11 @@ def get_config() -> dict[str, str]:
     return config
 
 
-class MangaOcrWrapper:
+class TrOcrConfig:
     def __init__(self):
         self._config = get_config()
-        self._mocr = MangaOcr(force_cpu=self._should_force_cpu())
-
-    def init(self):
-        prepare_pipe()
-        print(f"Reading from {PIPE_PATH}")
-        print(f"Custom clip args: {self._custom_clip_args()}")
-        return self
-
-    def loop(self):
-        while True:
-            with open(PIPE_PATH) as fifo:
-                for line in fifo:
-                    line = line.strip()
-                    if os.path.isfile(line):
-                        text = self._mocr(line)
-                        to_clip(text, custom_clip_args=self._custom_clip_args())
-                        os.remove(line)
-                        notify_send(f"Copied {text}")
-                    elif line == "[[stop]]":
-                        return notify_send("Stopped listening.")
+        self.force_cpu = self._should_force_cpu()
+        self.clip_args = self._custom_clip_args()
 
     def _should_force_cpu(self) -> bool:
         return bool(self._config.get('force_cpu', 'no') in ('true', 'yes',))
@@ -96,6 +78,31 @@ class MangaOcrWrapper:
             return self._config["clip_command"].strip().split()
         except (KeyError, AttributeError):
             return None
+
+
+class MangaOcrWrapper:
+    def __init__(self):
+        self._config = TrOcrConfig()
+        self._mocr = MangaOcr(force_cpu=self._config.force_cpu)
+
+    def init(self):
+        prepare_pipe()
+        print(f"Reading from {PIPE_PATH}")
+        print(f"Custom clip args: {self._config.clip_args}")
+        return self
+
+    def loop(self):
+        while True:
+            with open(PIPE_PATH) as fifo:
+                for line in fifo:
+                    line = line.strip()
+                    if os.path.isfile(line):
+                        text = self._mocr(line)
+                        to_clip(text, custom_clip_args=self._config.clip_args)
+                        os.remove(line)
+                        notify_send(f"Copied {text}")
+                    elif line == "[[stop]]":
+                        return notify_send("Stopped listening.")
 
 
 def main():
