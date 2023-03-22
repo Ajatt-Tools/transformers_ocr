@@ -130,6 +130,7 @@ stop_listening() {
 	else
 		notify "Already stopped."
 	fi
+	wait
 }
 
 help() {
@@ -160,6 +161,7 @@ main() {
 	download) download_manga_ocr ;;
 	start | listen) ensure_listening ;;
 	stop) stop_listening ;;
+	restart) stop_listening; wait; ensure_listening ;;
 	status) report_status ;;
 	recognize) run_ocr ;;
 	help | -h | --help) help ;;
