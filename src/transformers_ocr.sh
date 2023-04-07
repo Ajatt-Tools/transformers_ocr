@@ -82,7 +82,7 @@ run_ocr() {
 	ensure_listening
 	local -r screenshot_path=$(mktemp /tmp/screenshot.XXXXXX)
 	take_screenshot >"$screenshot_path"
-	echo "$screenshot_path" >"$PIPE_PATH" &
+	echo "$1::$screenshot_path" >"$PIPE_PATH" &
 }
 
 get_pid() {
@@ -125,7 +125,7 @@ ensure_listening() {
 stop_listening() {
 	local -r pid=$(get_pid)
 	if [[ $pid != None ]]; then
-		echo '[[stop]]' >"$PIPE_PATH" &
+		echo 'stop::' >"$PIPE_PATH" &
 		(sleep 1s && kill -SIGTERM "$pid") >/dev/null 2>&1
 	else
 		notify "Already stopped."
@@ -167,7 +167,8 @@ main() {
 		ensure_listening
 		;;
 	status) report_status ;;
-	recognize) run_ocr ;;
+	recognize | ocr) run_ocr "recognize" ;;
+	hold) run_ocr "hold" ;;
 	help | -h | --help) help ;;
 	*) echo "Unknown command." && help ;;
 	esac

@@ -1,12 +1,14 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/licenses/gpl.html
 
+import dataclasses
 import os
 import subprocess
-from typing import AnyStr, Collection
+from typing import AnyStr, Collection, IO
 
 from manga_ocr import MangaOcr
 
+SPACE = '　'
 PIPE_PATH = "/tmp/manga_ocr.fifo"
 IS_XORG = "WAYLAND_DISPLAY" not in os.environ
 CLIP_COPY_ARGS = (
@@ -80,10 +82,21 @@ class TrOcrConfig:
             return None
 
 
+@dataclasses.dataclass
+class OcrCommand:
+    action: str
+    file_path: str
+
+
+def iter_commands(stream: IO):
+    yield from (OcrCommand(*line.strip().split("::")) for line in stream)
+
+
 class MangaOcrWrapper:
     def __init__(self):
         self._config = TrOcrConfig()
         self._mocr = MangaOcr(force_cpu=self._config.force_cpu)
+        self._on_hold = []
 
     def init(self):
         prepare_pipe()
@@ -91,18 +104,28 @@ class MangaOcrWrapper:
         print(f"Custom clip args: {self._config.clip_args}")
         return self
 
+    def _process_command(self, command: OcrCommand):
+        match command:
+            case OcrCommand("stop", _):
+                return notify_send("Stopped listening.")
+            case OcrCommand(action=action, file_path=file_path) if os.path.isfile(file_path):
+                match action:
+                    case "hold":
+                        text = self._mocr(file_path)
+                        self._on_hold.append(text)
+                        notify_send(f"Holding {text}")
+                    case "recognize":
+                        text = SPACE.join((*self._on_hold, self._mocr(file_path)))
+                        to_clip(text, custom_clip_args=self._config.clip_args)
+                        notify_send(f"Copied {text}")
+                        self._on_hold.clear()
+                os.remove(file_path)
+
     def loop(self):
         while True:
             with open(PIPE_PATH) as fifo:
-                for line in fifo:
-                    line = line.strip()
-                    if os.path.isfile(line):
-                        text = self._mocr(line)
-                        to_clip(text, custom_clip_args=self._config.clip_args)
-                        os.remove(line)
-                        notify_send(f"Copied {text}")
-                    elif line == "[[stop]]":
-                        return notify_send("Stopped listening.")
+                for command in iter_commands(fifo):
+                    self._process_command(command)
 
 
 def main():
