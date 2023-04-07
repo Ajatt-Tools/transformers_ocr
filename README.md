@@ -1,4 +1,4 @@
-# transformers ocr
+# Transformers OCR
 
 > https://tatsumoto.neocities.org/blog/mining-from-manga.html
 
@@ -10,6 +10,12 @@ An OCR tool for the GNU operating system that uses `Transformers`.
 Supports Xorg and Wayland.
 
 https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-9985-5801d9685bd6.mp4
+
+This Manga OCR application is likely the most suckless and lightweight option available.
+It requires a minimum of dependencies, and all of them you probably already have.
+However, it still has to rely on large Python libraries to work.
+To isolate the bloat, these libraries are installed in a dedicated folder.
+But if your computer is rather slow, use Tesseract instead.
 
 ## Installation
 
