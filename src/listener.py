@@ -8,7 +8,7 @@ from typing import AnyStr, Collection, IO
 
 from manga_ocr import MangaOcr
 
-SPACE = '　'
+SPACE = '、'
 PIPE_PATH = "/tmp/manga_ocr.fifo"
 IS_XORG = "WAYLAND_DISPLAY" not in os.environ
 CLIP_COPY_ARGS = (
