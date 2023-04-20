@@ -12,6 +12,7 @@ Supports Xorg and Wayland.
 https://user-images.githubusercontent.com/69171671/177458117-ba858b79-0b2e-4605-9985-5801d9685bd6.mp4
 
 This Manga OCR application is likely the most suckless and lightweight option available.
+The application is designed to work best with a tiling window manager.
 It requires a minimum of dependencies, and all of them you probably already have.
 However, it still has to rely on large Python libraries to work.
 To isolate the bloat, these libraries are installed in a dedicated folder.
@@ -105,6 +106,33 @@ To speed up the first run, add the command below to autostart (using `~/.profile
 ```
 transformers_ocr start
 ```
+
+## Holding text
+
+Quite often one sentence, phrase or a chunk of meaning
+is split between two or more speech bubbles.
+This is a problem because if you take a screenshot of the whole area,
+including the area between the speech bubbles,
+you will likely end up with junk in the results.
+Processing each bubble separately is also not ideal
+since you want to analyze the entire sentence in GoldenDict, add it to Anki, etc.
+
+A solution is to have `transformers-ocr` hold text for you.
+It will recognize one speech bubble, remember it, then wait for another,
+and only copy the text from all bubbles altogether when you're done.
+
+To use this feature, add a new keyboard shortcut to the config file of your WM,
+for example <kbd>Mod+Shift+o</kbd>.
+Example for `i3wm`:
+
+```
+bindsym $mod+Shift+o  exec --no-startup-id transformers_ocr hold
+```
+
+Every time you call `hold`, a speech bubble will be recognized and saved for later.
+Finally, call `recognize` using the usual keyboard shortcut
+to copy the last speech bubble and all the saved ones together.
+The list of saved bubbles will be emptied when calling `recognize`.
 
 ## Config file
 
