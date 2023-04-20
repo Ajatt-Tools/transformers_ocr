@@ -129,6 +129,8 @@ Example for `i3wm`:
 bindsym $mod+Shift+o  exec --no-startup-id transformers_ocr hold
 ```
 
+https://user-images.githubusercontent.com/69171671/233484898-776ea15a-5a7a-443a-ac2e-5d06fb61540b.mp4
+
 Every time you call `hold`, a speech bubble will be recognized and saved for later.
 Finally, call `recognize` using the usual keyboard shortcut
 to copy the last speech bubble and all the saved ones together.
