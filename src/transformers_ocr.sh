@@ -45,7 +45,7 @@ download_manga_ocr() {
 	echo "Downloading manga-ocr..."
 	mkdir -p -- "$MANGA_OCR_PREFIX"
 	cd -- "$MANGA_OCR_PREFIX"
-	python3 -m venv pyenv
+	python3 -m venv --system-site-packages --symlinks pyenv
 	pyenv/bin/pip install --upgrade 'pip'
 	pyenv/bin/pip install --upgrade 'manga-ocr'
 	echo "Downloaded manga-ocr."
