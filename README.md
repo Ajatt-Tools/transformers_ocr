@@ -57,6 +57,16 @@ Install the following dependencies if they are not installed.
 
 </details>
 
+<details>
+
+<summary>GNOME</summary>
+
+* [pip](https://pypi.org/project/pip/)
+* [gnome-screenshot](https://gitlab.gnome.org/GNOME/gnome-screenshot)
+* [wl-copy](https://github.com/bugaevc/wl-clipboard)
+
+</details>
+
 **Install using Makefile:**
 
 ```

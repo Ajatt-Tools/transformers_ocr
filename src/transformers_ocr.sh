@@ -23,6 +23,10 @@ is_Xorg() {
 	[[ ${WAYLAND_DISPLAY:-None} == None ]]
 }
 
+is_GNOME() {
+	[[ ${XDG_CURRENT_DESKTOP:-None} == GNOME ]]
+}
+
 notify() {
 	echo "$*"
 	notify-send "Maim OCR" "$*" &
@@ -51,17 +55,27 @@ if is_Xorg; then
 	if_installed maim xclip || exit 1
 
 	take_screenshot() {
-		maim --select --hidecursor --format=png --quality 1
+		maim --select --hidecursor --format=png --quality 1 "$1"
 	}
 
 	print_platform() {
 		echo "Xorg"
 	}
+elif is_GNOME; then
+	if_installed gnome-screenshot wl-copy || exit 1
+
+	take_screenshot() {
+		gnome-screenshot -a -f "$1"
+	}
+
+	print_platform() {
+		echo "GNOME"
+	}
 else
 	if_installed grim slurp wl-copy || exit 1
 
 	take_screenshot() {
-		grim -g "$(slurp)" -
+		grim -g "$(slurp)" "$1"
 	}
 
 	print_platform() {
@@ -80,8 +94,8 @@ prepare_pipe() {
 
 run_ocr() {
 	ensure_listening
-	local -r screenshot_path=$(mktemp /tmp/screenshot.XXXXXX)
-	take_screenshot >"$screenshot_path"
+	local -r screenshot_path=$(mktemp /tmp/screenshot.XXXXXX.png)
+	take_screenshot "$screenshot_path"
 	echo "$1::$screenshot_path" >"$PIPE_PATH" &
 }
 
