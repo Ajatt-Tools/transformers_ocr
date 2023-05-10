@@ -8,6 +8,7 @@ from argparse import RawTextHelpFormatter
 import signal
 import shutil
 import sys
+import stat
 import subprocess
 import tempfile
 import dataclasses
@@ -16,29 +17,45 @@ from typing import AnyStr, Collection, IO
 
 PROGRAM = "transformers_ocr"
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
+MANGA_OCR_PYENV_PATH = os.path.join(MANGA_OCR_PREFIX, "pyenv")
+MANGA_OCR_PYENV_PIP_PATH = os.path.join(MANGA_OCR_PYENV_PATH, "bin", "pip")
+
 PIPE_PATH = "/tmp/manga_ocr.fifo"
 PID_FILE = "/tmp/manga_ocr.pid"
 
+SPACE = "、"
+CONFIG_PATH = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ["HOME"], ".config")),
+    "transformers_ocr",
+    "config",
+)
 
-def this_bin_dir():
-    return os.path.dirname(os.path.realpath(__file__))
+
+def get_clip_copy_args():
+    if is_Xorg():
+        return (
+            "xclip",
+            "-selection",
+            "clipboard",
+        )
+    return ("wl-copy",)
 
 
-def ocr_lib_dir():
-    return os.path.realpath(os.path.join(this_bin_dir(), "..", "lib", PROGRAM))
+def get_platform():
+    if is_Xorg():
+        return "Xorg"
+    elif is_GNOME():
+        return "GNOME"
+    else:
+        return "Wayland"
 
 
 def is_Xorg():
-    return os.environ.get("WAYLAND_DISPLAY") is None
+    return "WAYLAND_DISPLAY" not in os.environ
 
 
 def is_GNOME():
     return os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
-
-
-def notify(msg):
-    print(msg)
-    subprocess.Popen(["notify-send", "Maim OCR", msg])
 
 
 def if_installed(*programs):
@@ -52,43 +69,8 @@ def if_installed(*programs):
             )
             != 0
         ):
-            notify(f"{prog} must be installed for {PROGRAM} to work.")
+            notify_send(f"{prog} must be installed for {PROGRAM} to work.")
             sys.exit(1)
-
-
-def download_manga_ocr():
-    print("Downloading manga-ocr...")
-    os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
-    subprocess.run(
-        [
-            "python3",
-            "-m",
-            "venv",
-            "--system-site-packages",
-            "--symlinks",
-            os.path.join(MANGA_OCR_PREFIX, "pyenv"),
-        ],
-        check=True,
-    )
-    subprocess.run(
-        [
-            os.path.join(MANGA_OCR_PREFIX, "pyenv", "bin", "pip"),
-            "install",
-            "--upgrade",
-            "pip",
-        ],
-        check=True,
-    )
-    subprocess.run(
-        [
-            os.path.join(MANGA_OCR_PREFIX, "pyenv", "bin", "pip"),
-            "install",
-            "--upgrade",
-            "manga-ocr",
-        ],
-        check=True,
-    )
-    print("Downloaded manga-ocr.")
 
 
 def take_screenshot(screenshot_path):
@@ -122,15 +104,6 @@ def take_screenshot(screenshot_path):
         )
 
 
-def print_platform():
-    if is_Xorg():
-        return "Xorg"
-    elif is_GNOME():
-        return "GNOME"
-    else:
-        return "Wayland"
-
-
 def prepare_pipe():
     if os.path.exists(PIPE_PATH):
         os.unlink(PIPE_PATH)
@@ -158,27 +131,15 @@ def get_pid():
         return None
 
 
-def print_status():
-    if get_pid() is not None:
-        return "Running"
-    else:
-        return "Stopped"
-
-
-def report_status():
-    print(f"{print_status()}, {print_platform()}.")
-
-
 def ensure_listening():
     if os.path.exists(MANGA_OCR_PREFIX):
         if get_pid() is None:
             p = subprocess.Popen(
                 [
                     os.path.join(MANGA_OCR_PREFIX, "pyenv", "bin", "python3"),
-                    #os.path.join(this_bin_dir(), "listener.py"),
-                    os.path.join(this_bin_dir(), "transformers_ocr.py"),
+                    __file__,
                     "start",
-                    "--foreground"
+                    "--foreground",
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -203,27 +164,7 @@ def stop_listening():
         print("Already stopped.")
 
 
-SPACE = "、"
-IS_XORG = "WAYLAND_DISPLAY" not in os.environ
-CLIP_COPY_ARGS = (
-    (
-        "xclip",
-        "-selection",
-        "clipboard",
-    )
-    if IS_XORG
-    else ("wl-copy",)
-)
-CONFIG_PATH = os.path.join(
-    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ["HOME"], ".config")),
-    "transformers_ocr",
-    "config",
-)
-
-
 def is_fifo(path: AnyStr) -> bool:
-    import stat
-
     try:
         return stat.S_ISFIFO(os.stat(path).st_mode)
     except FileNotFoundError:
@@ -232,7 +173,7 @@ def is_fifo(path: AnyStr) -> bool:
 
 def to_clip(text: str, custom_clip_args: Collection[str] | None):
     if custom_clip_args is None:
-        p = subprocess.Popen(CLIP_COPY_ARGS, stdin=subprocess.PIPE)
+        p = subprocess.Popen(get_clip_copy_args(), stdin=subprocess.PIPE)
         p.communicate(input=text.encode())
     else:
         subprocess.Popen([*custom_clip_args, text], shell=False)
@@ -333,39 +274,75 @@ def listener():
     (MangaOcrWrapper().init().loop())
 
 
-def start(args):
+def start_cmd(args):
     if args.foreground:
         listener()
     else:
         ensure_listening()
 
 
-def stop(args):
+def stop_cmd(args):
     stop_listening()
 
 
-def restart(args):
+def restart_cmd(args):
     stop_listening()
     ensure_listening()
 
 
-def status(args):
-    report_status()
+def status_cmd(args):
+    status = "Running" if get_pid() else "Stopped"
+    print(f"{status}, {get_platform()}.")
 
 
-def download(args):
-    download_manga_ocr()
+def download_cmd(args):
+    print("Downloading manga-ocr...")
+    os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
+    subprocess.run(
+        [
+            "python3",
+            "-m",
+            "venv",
+            "--system-site-packages",
+            "--symlinks",
+            MANGA_OCR_PYENV_PATH,
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            MANGA_OCR_PYENV_PIP_PATH,
+            "install",
+            "--upgrade",
+            "pip",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            MANGA_OCR_PYENV_PIP_PATH,
+            "install",
+            "--upgrade",
+            "manga-ocr",
+        ],
+        check=True,
+    )
+    print("Downloaded manga-ocr.")
 
 
-def recognize(args):
+def recognize_cmd(args):
     run_ocr("recognize")
+
+
+def hold_cmd(args):
+    run_ocr("hold")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="An OCR tool that uses Transformers.",
-        epilog="""
-Platform: GNOME
+        epilog=f"""
+Platform: {get_platform()}
 You need to run 'trocr download' once after installation.
 trocr home page: https://github.com/Ajatt-Tools/transformers_ocr""",
         formatter_class=RawTextHelpFormatter,
@@ -375,25 +352,28 @@ trocr home page: https://github.com/Ajatt-Tools/transformers_ocr""",
     recognize_parser = subparsers.add_parser(
         "recognize", help="OCR a part of the screen.", aliases=["ocr"]
     )
-    recognize_parser.set_defaults(func=recognize)
+    recognize_parser.set_defaults(func=recognize_cmd)
+
+    hold_parser = subparsers.add_parser("hold", help="OCR a part of the screen.")
+    hold_parser.set_defaults(func=hold_cmd)
 
     download_parser = subparsers.add_parser("download", help="Download OCR files.")
-    download_parser.set_defaults(func=download)
+    download_parser.set_defaults(func=download_cmd)
 
     start_parser = subparsers.add_parser(
         "start", help="Start listening.", aliases=["listen"]
     )
     start_parser.add_argument("--foreground", action="store_true")
-    start_parser.set_defaults(func=start)
+    start_parser.set_defaults(func=start_cmd)
 
     stop_parser = subparsers.add_parser("stop", help="Stop listening")
-    stop_parser.set_defaults(func=stop)
+    stop_parser.set_defaults(func=stop_cmd)
 
     status_parser = subparsers.add_parser("status", help="Print listening status.")
-    status_parser.set_defaults(func=status)
+    status_parser.set_defaults(func=status_cmd)
 
     restart_parser = subparsers.add_parser("restart", help="Restart the program")
-    restart_parser.set_defaults(func=restart)
+    restart_parser.set_defaults(func=restart_cmd)
 
     args = parser.parse_args()
     if len(sys.argv) < 2:
