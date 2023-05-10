@@ -57,17 +57,13 @@ def is_GNOME():
     return os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
 
 
+def is_pacman_installed(program: str) -> bool:
+    return subprocess.call(["pacman", "-Qq", program], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
+
+
 def if_installed(*programs):
     for prog in programs:
-        if (
-            not shutil.which(prog)
-            and subprocess.call(
-                ["pacman", "-Qq", prog],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            != 0
-        ):
+        if not shutil.which(prog) and not is_pacman_installed(prog):
             notify_send(f"{prog} must be installed for {PROGRAM} to work.")
             sys.exit(1)
 
