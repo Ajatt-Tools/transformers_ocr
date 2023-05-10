@@ -69,7 +69,10 @@ def if_installed(*programs):
 
 
 def take_screenshot(screenshot_path):
-    if is_Xorg():
+    if is_GNOME():
+        if_installed("gnome-screenshot", "wl-copy")
+        subprocess.run(["gnome-screenshot", "-a", "-f", screenshot_path], check=True)
+    elif is_Xorg():
         if_installed("maim", "xclip")
         subprocess.run(
             [
@@ -83,9 +86,6 @@ def take_screenshot(screenshot_path):
             ],
             check=True,
         )
-    elif is_GNOME():
-        if_installed("gnome-screenshot", "wl-copy")
-        subprocess.run(["gnome-screenshot", "-a", "-f", screenshot_path], check=True)
     else:
         if_installed("grim", "slurp", "wl-copy")
         subprocess.run(
