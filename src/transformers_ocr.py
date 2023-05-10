@@ -336,7 +336,7 @@ def hold_cmd(args):
     run_ocr("hold")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="An OCR tool that uses Transformers.",
         epilog=f"""
@@ -378,3 +378,7 @@ trocr home page: https://github.com/Ajatt-Tools/transformers_ocr""",
         parser.print_help()
     else:
         args.func(args)
+
+
+if __name__ == "__main__":
+    main()
