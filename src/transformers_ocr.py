@@ -227,7 +227,7 @@ def iter_commands(stream: IO):
 
 class MangaOcrWrapper:
     def __init__(self):
-        from manga_ocr import MangaOcr
+        from manga_ocr import MangaOcr  # type: ignore
 
         self._config = TrOcrConfig()
         self._mocr = MangaOcr(force_cpu=self._config.force_cpu)
