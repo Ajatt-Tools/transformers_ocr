@@ -38,7 +38,10 @@ def get_clip_copy_args():
             "-selection",
             "clipboard",
         )
-    return ("wl-copy",)
+    else:
+        return (
+            "wl-copy",
+        )
 
 
 def get_platform():
@@ -202,13 +205,7 @@ class TrOcrConfig:
         self.clip_args = self._custom_clip_args()
 
     def _should_force_cpu(self) -> bool:
-        return bool(
-            self._config.get("force_cpu", "no")
-            in (
-                "true",
-                "yes",
-            )
-        )
+        return bool(self._config.get('force_cpu', 'no') in ('true', 'yes',))
 
     def _custom_clip_args(self) -> list[str] | None:
         try:
@@ -245,9 +242,7 @@ class MangaOcrWrapper:
         match command:
             case OcrCommand("stop", _):
                 return notify_send("Stopped listening.")
-            case OcrCommand(action=action, file_path=file_path) if os.path.isfile(
-                    file_path
-            ):
+            case OcrCommand(action=action, file_path=file_path) if os.path.isfile(file_path):
                 match action:
                     case "hold":
                         text = self._mocr(file_path)
@@ -267,22 +262,18 @@ class MangaOcrWrapper:
                     self._process_command(command)
 
 
-def listener():
-    (MangaOcrWrapper().init().loop())
+def run_listener():
+    return MangaOcrWrapper().init().loop()
 
 
-def start_cmd(args):
+def start_listening(args):
     if args.foreground:
-        listener()
+        run_listener()
     else:
         ensure_listening()
 
 
-def stop_cmd(args):
-    stop_listening()
-
-
-def restart_cmd(args):
+def restart_listener():
     stop_listening()
     ensure_listening()
 
@@ -291,91 +282,68 @@ def status_str():
     return "Running" if get_pid() else "Stopped"
 
 
-def status_cmd(_args):
+def print_status():
     print(f"{status_str()}, {get_platform()}.")
 
 
-def download_cmd(args):
+def download_manga_ocr():
     print("Downloading manga-ocr...")
     os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
     subprocess.run(
-        [
-            "python3",
-            "-m",
-            "venv",
-            "--system-site-packages",
-            "--symlinks",
-            MANGA_OCR_PYENV_PATH,
-        ],
+        ["python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH, ],
         check=True,
     )
     subprocess.run(
-        [
-            MANGA_OCR_PYENV_PIP_PATH,
-            "install",
-            "--upgrade",
-            "pip",
-        ],
+        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "pip", ],
         check=True,
     )
     subprocess.run(
-        [
-            MANGA_OCR_PYENV_PIP_PATH,
-            "install",
-            "--upgrade",
-            "manga-ocr",
-        ],
+        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "manga-ocr", ],
         check=True,
     )
     print("Downloaded manga-ocr.")
 
 
-def recognize_cmd(args):
-    run_ocr("recognize")
-
-
-def hold_cmd(args):
-    run_ocr("hold")
+def prog_name():
+    return os.path.basename(sys.argv[0])
 
 
 def main():
+    prepare_pipe()
     parser = argparse.ArgumentParser(
         description="An OCR tool that uses Transformers.",
         epilog=f"""
-Platform: {get_platform()}
-You need to run 'trocr download' once after installation.
-trocr home page: https://github.com/Ajatt-Tools/transformers_ocr""",
+    Platform: {get_platform()}
+    You need to run '{prog_name()} download' once after installation.
+    {prog_name()} home page: https://github.com/Ajatt-Tools/transformers_ocr""",
         formatter_class=RawTextHelpFormatter,
     )
     subparsers = parser.add_subparsers(title="Options")
 
-    recognize_parser = subparsers.add_parser(
-        "recognize", help="OCR a part of the screen.", aliases=["ocr"]
-    )
-    recognize_parser.set_defaults(func=recognize_cmd)
+    recognize_parser = subparsers.add_parser("recognize", help="OCR a part of the screen.", aliases=["ocr"])
+    recognize_parser.set_defaults(func=lambda _args: run_ocr("recognize"))
 
     hold_parser = subparsers.add_parser("hold", help="OCR a part of the screen.")
-    hold_parser.set_defaults(func=hold_cmd)
+    hold_parser.set_defaults(func=lambda _args: run_ocr("hold"))
 
     download_parser = subparsers.add_parser("download", help="Download OCR files.")
-    download_parser.set_defaults(func=download_cmd)
+    download_parser.set_defaults(func=lambda _args: download_manga_ocr())
 
-    start_parser = subparsers.add_parser(
-        "start", help="Start listening.", aliases=["listen"]
-    )
+    start_parser = subparsers.add_parser("start", help="Start listening.", aliases=["listen"])
     start_parser.add_argument("--foreground", action="store_true")
-    start_parser.set_defaults(func=start_cmd)
+    start_parser.set_defaults(func=start_listening)
 
     stop_parser = subparsers.add_parser("stop", help="Stop listening")
-    stop_parser.set_defaults(func=stop_cmd)
+    stop_parser.set_defaults(func=lambda _args: stop_listening())
 
     status_parser = subparsers.add_parser("status", help="Print listening status.")
-    status_parser.set_defaults(func=status_cmd)
+    status_parser.set_defaults(func=lambda _args: print_status())
 
     restart_parser = subparsers.add_parser("restart", help="Restart the program")
-    restart_parser.set_defaults(func=restart_cmd)
+    restart_parser.set_defaults(func=lambda _args: restart_listener())
 
     args = parser.parse_args()
+
     if len(sys.argv) < 2:
         parser.print_help()
     else:
