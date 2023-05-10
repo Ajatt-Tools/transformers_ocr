@@ -2,18 +2,17 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/licenses/gpl.html
 
-import os
 import argparse
-from argparse import RawTextHelpFormatter
-import signal
+import dataclasses
+import os
 import shutil
-import sys
+import signal
 import stat
 import subprocess
+import sys
 import tempfile
-import dataclasses
+from argparse import RawTextHelpFormatter
 from typing import AnyStr, Collection, IO
-
 
 PROGRAM = "transformers_ocr"
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
@@ -249,7 +248,7 @@ class MangaOcrWrapper:
             case OcrCommand("stop", _):
                 return notify_send("Stopped listening.")
             case OcrCommand(action=action, file_path=file_path) if os.path.isfile(
-                file_path
+                    file_path
             ):
                 match action:
                     case "hold":
