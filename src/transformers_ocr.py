@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from argparse import RawTextHelpFormatter
 from typing import AnyStr, Collection, IO
 
@@ -154,6 +155,7 @@ def stop_listening():
     if pid is not None:
         with open(PIPE_PATH, "w") as pipe:
             pipe.write("stop::")
+        time.sleep(1)
         os.kill(pid, signal.SIGTERM)
     else:
         print("Already stopped.")
