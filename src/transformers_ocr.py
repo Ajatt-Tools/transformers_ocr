@@ -4,6 +4,7 @@
 
 import argparse
 import dataclasses
+import datetime
 import os
 import shutil
 import signal
@@ -205,6 +206,7 @@ class TrOcrConfig:
         self._config = get_config()
         self.force_cpu = self._should_force_cpu()
         self.clip_args = self._custom_clip_args()
+        self.screenshot_dir = self._get_screenshot_dir()
 
     def _should_force_cpu(self) -> bool:
         return bool(self._config.get('force_cpu', 'no') in ('true', 'yes',))
@@ -214,6 +216,10 @@ class TrOcrConfig:
             return self._config["clip_command"].strip().split()
         except (KeyError, AttributeError):
             return None
+
+    def _get_screenshot_dir(self):
+        if (screenshot_dir := self._config.get('screenshot_dir')) and os.path.isdir(screenshot_dir):
+            return screenshot_dir
 
 
 @dataclasses.dataclass
@@ -255,7 +261,17 @@ class MangaOcrWrapper:
                         to_clip(text, custom_clip_args=self._config.clip_args)
                         notify_send(f"Copied {text}")
                         self._on_hold.clear()
+                        self._maybe_save_result(file_path, text)
                 os.remove(file_path)
+
+    def _maybe_save_result(self, file_path, text):
+        if self._config.screenshot_dir:
+            name_pattern = datetime.datetime.now().strftime("trocr_%Y%m%d_%H%M%S")
+            text_file_path = os.path.join(self._config.screenshot_dir, f'{name_pattern}.gt.txt')
+            png_file_path = os.path.join(self._config.screenshot_dir, f'{name_pattern}.png')
+            with open(text_file_path, 'w', encoding='utf8') as of:
+                of.write(text)
+            shutil.copy(file_path, png_file_path)
 
     def loop(self):
         while True:
