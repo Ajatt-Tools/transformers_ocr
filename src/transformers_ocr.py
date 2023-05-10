@@ -285,9 +285,12 @@ def restart_cmd(args):
     ensure_listening()
 
 
-def status_cmd(args):
-    status = "Running" if get_pid() else "Stopped"
-    print(f"{status}, {get_platform()}.")
+def status_str():
+    return "Running" if get_pid() else "Stopped"
+
+
+def status_cmd(_args):
+    print(f"{status_str()}, {get_platform()}.")
 
 
 def download_cmd(args):
