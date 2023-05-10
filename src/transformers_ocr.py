@@ -72,35 +72,37 @@ def if_installed(*programs):
             sys.exit(1)
 
 
+def gnome_screenshot_select(screenshot_path: str):
+    return subprocess.run(
+        ("gnome-screenshot", "-a", "-f", screenshot_path),
+        check=True,
+    )
+
+
+def maim_select(screenshot_path: str):
+    return subprocess.run(
+        ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
+        check=True,
+    )
+
+
+def grim_select(screenshot_path: str):
+    return subprocess.run(
+        ("grim", "-g", subprocess.check_output(["slurp"]).decode().strip(), screenshot_path,),
+        check=True,
+    )
+
+
 def take_screenshot(screenshot_path):
     if is_GNOME():
         if_installed("gnome-screenshot", "wl-copy")
-        subprocess.run(["gnome-screenshot", "-a", "-f", screenshot_path], check=True)
+        gnome_screenshot_select(screenshot_path)
     elif is_Xorg():
         if_installed("maim", "xclip")
-        subprocess.run(
-            [
-                "maim",
-                "--select",
-                "--hidecursor",
-                "--format=png",
-                "--quality",
-                "1",
-                screenshot_path,
-            ],
-            check=True,
-        )
+        maim_select(screenshot_path)
     else:
         if_installed("grim", "slurp", "wl-copy")
-        subprocess.run(
-            [
-                "grim",
-                "-g",
-                subprocess.check_output(["slurp"]).decode().strip(),
-                screenshot_path,
-            ],
-            check=True,
-        )
+        grim_select(screenshot_path)
 
 
 def prepare_pipe():
