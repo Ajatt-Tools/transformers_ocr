@@ -106,9 +106,9 @@ def take_screenshot(screenshot_path):
 
 
 def prepare_pipe():
-    if os.path.exists(PIPE_PATH):
-        os.unlink(PIPE_PATH)
-    if not os.path.exists(PIPE_PATH):
+    if os.path.isfile(PIPE_PATH):
+        os.remove(PIPE_PATH)
+    if not is_fifo(PIPE_PATH):
         os.mkfifo(PIPE_PATH)
 
 
