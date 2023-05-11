@@ -243,6 +243,10 @@ class OcrCommand:
     file_path: str
 
 
+class StopRequested(Exception):
+    pass
+
+
 def iter_commands(stream: IO):
     yield from (OcrCommand(*line.strip().split("::")) for line in stream)
 
@@ -264,7 +268,7 @@ class MangaOcrWrapper:
     def _process_command(self, command: OcrCommand):
         match command:
             case OcrCommand("stop", _):
-                return notify_send("Stopped listening.")
+                raise StopRequested()
             case OcrCommand(action=action, file_path=file_path) if os.path.isfile(file_path):
                 match action:
                     case "hold":
@@ -289,10 +293,13 @@ class MangaOcrWrapper:
             shutil.copy(file_path, png_file_path)
 
     def loop(self):
-        while True:
-            with open(PIPE_PATH) as fifo:
-                for command in iter_commands(fifo):
-                    self._process_command(command)
+        try:
+            while True:
+                with open(PIPE_PATH) as fifo:
+                    for command in iter_commands(fifo):
+                        self._process_command(command)
+        except StopRequested:
+            return notify_send("Stopped listening.")
 
 
 def run_listener():
