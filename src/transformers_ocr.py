@@ -158,13 +158,26 @@ def ensure_listening():
         sys.exit(1)
 
 
+def kill_after(pid: int, timeout_s: float, step_s: float = 0.1):
+    for _step in range(int(timeout_s // step_s)):
+        if get_pid() is None:
+            print(" Stopped.")
+            break
+        time.sleep(step_s)
+        print(".", end="", flush=True)
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    else:
+        print(" Killed.")
+
+
 def stop_listening():
-    pid = get_pid()
-    if pid is not None:
+    if (pid := get_pid()) is not None:
         with open(PIPE_PATH, "w") as pipe:
             pipe.write("stop::")
-        time.sleep(1)
-        os.kill(pid, signal.SIGTERM)
+        kill_after(pid, timeout_s=3)
     else:
         print("Already stopped.")
 
