@@ -265,6 +265,13 @@ class MangaOcrWrapper:
         print(f"Custom clip args: {self._config.clip_args}")
         return self
 
+    def _ocr(self, file_path: str) -> str:
+        return (
+            self._mocr(file_path)
+            .replace('...', '…')
+            .replace('。。。', '…')
+        )
+
     def _process_command(self, command: OcrCommand):
         match command:
             case OcrCommand("stop", _):
@@ -272,11 +279,11 @@ class MangaOcrWrapper:
             case OcrCommand(action=action, file_path=file_path) if os.path.isfile(file_path):
                 match action:
                     case "hold":
-                        text = self._mocr(file_path)
+                        text = self._ocr(file_path)
                         self._on_hold.append(text)
                         notify_send(f"Holding {text}")
                     case "recognize":
-                        text = SPACE.join((*self._on_hold, self._mocr(file_path)))
+                        text = SPACE.join((*self._on_hold, self._ocr(file_path)))
                         to_clip(text, custom_clip_args=self._config.clip_args)
                         notify_send(f"Copied {text}")
                         self._on_hold.clear()
