@@ -121,16 +121,18 @@ def run_ocr(command):
             pipe.write(f"{command}::{screenshot_file.name}")
 
 
-def get_pid():
+def is_running(pid: int) -> bool:
+    return pid > 0 and os.path.exists(f"/proc/{pid}")
+
+
+def get_pid() -> int | None:
     try:
         with open(PID_FILE) as pid_file:
             pid = int(pid_file.read())
-            if pid > 0 and os.path.exists(f"/proc/{pid}"):
-                return pid
-            else:
-                return None
     except (ValueError, FileNotFoundError):
         return None
+    else:
+        return pid if is_running(pid) else None
 
 
 def ensure_listening():
