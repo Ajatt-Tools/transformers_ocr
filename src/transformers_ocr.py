@@ -15,7 +15,7 @@ import sys
 import tempfile
 import time
 from argparse import RawTextHelpFormatter
-from typing import AnyStr, Collection, IO
+from typing import AnyStr, Collection, IO, Iterable
 
 PROGRAM = "transformers_ocr"
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
@@ -144,7 +144,7 @@ def run_ocr(command):
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as screenshot_file:
         take_screenshot(screenshot_file.name)
         with open(PIPE_PATH, "w") as pipe:
-            pipe.write(f"{command}::{screenshot_file.name}")
+            pipe.write(OcrCommand(action=command, file_path=screenshot_file.name).as_json())
 
 
 def is_running(pid: int) -> bool:
@@ -202,7 +202,7 @@ def kill_after(pid: int, timeout_s: float, step_s: float = 0.1):
 def stop_listening():
     if (pid := get_pid()) is not None:
         with open(PIPE_PATH, "w") as pipe:
-            pipe.write("stop::")
+            pipe.write(OcrCommand(action="stop", file_path=None).as_json())
         kill_after(pid, timeout_s=3)
     else:
         print("Already stopped.")
@@ -266,8 +266,8 @@ class TrOcrConfig:
             return screenshot_dir
 
 
-def iter_commands(stream: IO):
-    yield from (OcrCommand(*line.strip().split("::")) for line in stream)
+def iter_commands(stream: IO) -> Iterable[OcrCommand]:
+    yield from (OcrCommand(**json.loads(line)) for line in stream)
 
 
 class MangaOcrWrapper:
