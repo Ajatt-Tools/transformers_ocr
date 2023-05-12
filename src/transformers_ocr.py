@@ -85,7 +85,7 @@ def is_GNOME():
 
 
 def is_pacman_installed(program: str) -> bool:
-    return subprocess.call(["pacman", "-Qq", program], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
+    return subprocess.call(("pacman", "-Qq", program,), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
 
 
 def if_installed(*programs):
@@ -97,7 +97,7 @@ def if_installed(*programs):
 
 def gnome_screenshot_select(screenshot_path: str):
     return subprocess.run(
-        ("gnome-screenshot", "-a", "-f", screenshot_path),
+        ("gnome-screenshot", "-a", "-f", screenshot_path,),
         check=True,
     )
 
@@ -106,6 +106,7 @@ def maim_select(screenshot_path: str):
     return subprocess.run(
         ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
         check=True,
+        stderr=sys.stdout,
     )
 
 
@@ -161,12 +162,12 @@ def ensure_listening():
     if os.path.exists(MANGA_OCR_PREFIX):
         if get_pid() is None:
             p = subprocess.Popen(
-                [
+                (
                     os.path.join(MANGA_OCR_PREFIX, "pyenv", "bin", "python3"),
                     __file__,
                     "start",
                     "--foreground",
-                ],
+                ),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -221,7 +222,10 @@ def to_clip(text: str, custom_clip_args: Collection[str] | None):
 
 def notify_send(msg: str):
     print(msg)
-    subprocess.Popen(("notify-send", "manga-ocr", msg), shell=False)
+    try:
+        subprocess.Popen(("notify-send", "manga-ocr", msg,), shell=False)
+    except FileNotFoundError:
+        pass
 
 
 def is_valid_key_val_pair(line: str) -> bool:
@@ -349,15 +353,15 @@ def download_manga_ocr():
     print("Downloading manga-ocr...")
     os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
     subprocess.run(
-        ["python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH, ],
+        ("python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH,),
         check=True,
     )
     subprocess.run(
-        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "pip", ],
+        (MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "pip",),
         check=True,
     )
     subprocess.run(
-        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "manga-ocr", ],
+        (MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "manga-ocr",),
         check=True,
     )
     print("Downloaded manga-ocr.")
