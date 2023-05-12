@@ -5,6 +5,7 @@
 import argparse
 import dataclasses
 import datetime
+import json
 import os
 import shutil
 import signal
@@ -30,6 +31,27 @@ CONFIG_PATH = os.path.join(
     "transformers_ocr",
     "config",
 )
+
+
+class MissingProgram(RuntimeError):
+    pass
+
+
+class StopRequested(Exception):
+    pass
+
+
+class ScreenshotCancelled(RuntimeError):
+    pass
+
+
+@dataclasses.dataclass
+class OcrCommand:
+    action: str
+    file_path: str | None
+
+    def as_json(self):
+        return json.dumps(dataclasses.asdict(self))
 
 
 def get_clip_copy_args():
@@ -235,16 +257,6 @@ class TrOcrConfig:
     def _get_screenshot_dir(self):
         if (screenshot_dir := self._config.get('screenshot_dir')) and os.path.isdir(screenshot_dir):
             return screenshot_dir
-
-
-@dataclasses.dataclass
-class OcrCommand:
-    action: str
-    file_path: str
-
-
-class StopRequested(Exception):
-    pass
 
 
 def iter_commands(stream: IO):
