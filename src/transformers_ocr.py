@@ -88,11 +88,14 @@ def is_pacman_installed(program: str) -> bool:
     return subprocess.call(("pacman", "-Qq", program,), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
 
 
-def if_installed(*programs):
+def is_installed(program: str) -> bool:
+    return shutil.which(program) or is_pacman_installed(program)
+
+
+def raise_if_missing(*programs):
     for prog in programs:
-        if not shutil.which(prog) and not is_pacman_installed(prog):
-            notify_send(f"{prog} must be installed for {PROGRAM} to work.")
-            sys.exit(1)
+        if not is_installed(prog):
+            raise MissingProgram(f"{prog} must be installed for {PROGRAM} to work.")
 
 
 def gnome_screenshot_select(screenshot_path: str):
@@ -119,13 +122,13 @@ def grim_select(screenshot_path: str):
 
 def take_screenshot(screenshot_path):
     if is_GNOME():
-        if_installed("gnome-screenshot", "wl-copy")
+        raise_if_missing("gnome-screenshot", "wl-copy")
         gnome_screenshot_select(screenshot_path)
     elif is_Xorg():
-        if_installed("maim", "xclip")
+        raise_if_missing("maim", "xclip")
         maim_select(screenshot_path)
     else:
-        if_installed("grim", "slurp", "wl-copy")
+        raise_if_missing("grim", "slurp", "wl-copy")
         grim_select(screenshot_path)
 
 
