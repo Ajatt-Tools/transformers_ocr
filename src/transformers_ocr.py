@@ -5,6 +5,7 @@
 import argparse
 import dataclasses
 import datetime
+import enum
 import json
 import os
 import shutil
@@ -17,20 +18,43 @@ import time
 from argparse import RawTextHelpFormatter
 from typing import AnyStr, Collection, IO, Iterable
 
-PROGRAM = "transformers_ocr"
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
 MANGA_OCR_PYENV_PATH = os.path.join(MANGA_OCR_PREFIX, "pyenv")
 MANGA_OCR_PYENV_PIP_PATH = os.path.join(MANGA_OCR_PYENV_PATH, "bin", "pip")
-
-PIPE_PATH = "/tmp/manga_ocr.fifo"
-PID_FILE = "/tmp/manga_ocr.pid"
-
-SPACE = "、"
 CONFIG_PATH = os.path.join(
     os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ["HOME"], ".config")),
     "transformers_ocr",
     "config",
 )
+PIPE_PATH = "/tmp/manga_ocr.fifo"
+PID_FILE = "/tmp/manga_ocr.pid"
+PROGRAM = "transformers_ocr"
+JOIN = "、"
+IS_XORG = "WAYLAND_DISPLAY" not in os.environ
+IS_GNOME = os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
+CLIP_COPY_ARGS = (
+    ("xclip", "-selection", "clipboard",)
+    if IS_XORG
+    else ("wl-copy",)
+)
+
+
+class Platform(enum.Enum):
+    GNOME = enum.auto()
+    Xorg = enum.auto()
+    Wayland = enum.auto()
+
+    @classmethod
+    def current(cls):
+        if IS_GNOME:
+            return cls.GNOME
+        elif IS_XORG:
+            return cls.Xorg
+        else:
+            return cls.Wayland
+
+
+CURRENT_PLATFORM = Platform.current()
 
 
 class MissingProgram(RuntimeError):
@@ -52,36 +76,6 @@ class OcrCommand:
 
     def as_json(self):
         return json.dumps(dataclasses.asdict(self))
-
-
-def get_clip_copy_args():
-    if is_Xorg():
-        return (
-            "xclip",
-            "-selection",
-            "clipboard",
-        )
-    else:
-        return (
-            "wl-copy",
-        )
-
-
-def get_platform():
-    if is_Xorg():
-        return "Xorg"
-    elif is_GNOME():
-        return "GNOME"
-    else:
-        return "Wayland"
-
-
-def is_Xorg():
-    return "WAYLAND_DISPLAY" not in os.environ
-
-
-def is_GNOME():
-    return os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
 
 
 def is_pacman_installed(program: str) -> bool:
@@ -121,15 +115,16 @@ def grim_select(screenshot_path: str):
 
 
 def take_screenshot(screenshot_path):
-    if is_GNOME():
-        raise_if_missing("gnome-screenshot", "wl-copy")
-        gnome_screenshot_select(screenshot_path)
-    elif is_Xorg():
-        raise_if_missing("maim", "xclip")
-        maim_select(screenshot_path)
-    else:
-        raise_if_missing("grim", "slurp", "wl-copy")
-        grim_select(screenshot_path)
+    match CURRENT_PLATFORM:
+        case Platform.GNOME:
+            raise_if_missing("gnome-screenshot", "wl-copy")
+            gnome_screenshot_select(screenshot_path)
+        case Platform.Xorg:
+            raise_if_missing("maim", "xclip")
+            maim_select(screenshot_path)
+        case Platform.Wayland:
+            raise_if_missing("grim", "slurp", "wl-copy")
+            grim_select(screenshot_path)
 
 
 def prepare_pipe():
@@ -142,7 +137,10 @@ def prepare_pipe():
 def run_ocr(command):
     ensure_listening()
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as screenshot_file:
-        take_screenshot(screenshot_file.name)
+        try:
+            take_screenshot(screenshot_file.name)
+        except subprocess.CalledProcessError as ex:
+            raise ScreenshotCancelled() from ex
         with open(PIPE_PATH, "w") as pipe:
             pipe.write(OcrCommand(action=command, file_path=screenshot_file.name).as_json())
 
@@ -217,7 +215,7 @@ def is_fifo(path: AnyStr) -> bool:
 
 def to_clip(text: str, custom_clip_args: Collection[str] | None):
     if custom_clip_args is None:
-        p = subprocess.Popen(get_clip_copy_args(), stdin=subprocess.PIPE)
+        p = subprocess.Popen(CLIP_COPY_ARGS, stdin=subprocess.PIPE)
         p.communicate(input=text.encode())
     else:
         subprocess.Popen([*custom_clip_args, text], shell=False)
@@ -302,7 +300,7 @@ class MangaOcrWrapper:
                         self._on_hold.append(text)
                         notify_send(f"Holding {text}")
                     case "recognize":
-                        text = SPACE.join((*self._on_hold, self._ocr(file_path)))
+                        text = JOIN.join((*self._on_hold, self._ocr(file_path)))
                         to_clip(text, custom_clip_args=self._config.clip_args)
                         notify_send(f"Copied {text}")
                         self._on_hold.clear()
@@ -349,7 +347,7 @@ def status_str():
 
 
 def print_status():
-    print(f"{status_str()}, {get_platform()}.")
+    print(f"{status_str()}, {CURRENT_PLATFORM.name}.")
 
 
 def download_manga_ocr():
@@ -374,22 +372,24 @@ def prog_name():
     return os.path.basename(sys.argv[0])
 
 
-def main():
-    prepare_pipe()
+
+
+def create_args_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="An OCR tool that uses Transformers.",
-        epilog=f"""
-    Platform: {get_platform()}
-    You need to run '{prog_name()} download' once after installation.
-    {prog_name()} home page: https://github.com/Ajatt-Tools/transformers_ocr""",
         formatter_class=RawTextHelpFormatter,
     )
-    subparsers = parser.add_subparsers(title="Options")
+    parser.epilog = f"""
+Platform: {CURRENT_PLATFORM.name}
+You need to run '{prog_name()} download' once after installation.
+{prog_name()} home page: https://github.com/Ajatt-Tools/transformers_ocr"""
+
+    subparsers = parser.add_subparsers(title="commands")
 
     recognize_parser = subparsers.add_parser("recognize", help="OCR a part of the screen.", aliases=["ocr"])
     recognize_parser.set_defaults(func=lambda _args: run_ocr("recognize"))
 
-    hold_parser = subparsers.add_parser("hold", help="OCR a part of the screen.")
+    hold_parser = subparsers.add_parser("hold", help="OCR and hold a part of the screen.")
     hold_parser.set_defaults(func=lambda _args: run_ocr("hold"))
 
     download_parser = subparsers.add_parser("download", help="Download OCR files.")
@@ -399,21 +399,31 @@ def main():
     start_parser.add_argument("--foreground", action="store_true")
     start_parser.set_defaults(func=start_listening)
 
-    stop_parser = subparsers.add_parser("stop", help="Stop listening")
+    stop_parser = subparsers.add_parser("stop", help="Stop listening.")
     stop_parser.set_defaults(func=lambda _args: stop_listening())
 
     status_parser = subparsers.add_parser("status", help="Print listening status.")
     status_parser.set_defaults(func=lambda _args: print_status())
 
-    restart_parser = subparsers.add_parser("restart", help="Restart the program")
+    restart_parser = subparsers.add_parser("restart", help="Restart the program.")
     restart_parser.set_defaults(func=lambda _args: restart_listener())
 
-    args = parser.parse_args()
 
+    return parser
+
+
+def main():
+    prepare_pipe()
+    parser = create_args_parser()
     if len(sys.argv) < 2:
-        parser.print_help()
-    else:
+        return parser.print_help()
+    args = parser.parse_args()
+    try:
         args.func(args)
+    except MissingProgram as ex:
+        notify_send(str(ex))
+    except ScreenshotCancelled:
+        notify_send("Screenshot cancelled.")
 
 
 if __name__ == "__main__":
