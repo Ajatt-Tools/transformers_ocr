@@ -21,6 +21,7 @@ from typing import AnyStr, Collection, IO, Iterable
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
 MANGA_OCR_PYENV_PATH = os.path.join(MANGA_OCR_PREFIX, "pyenv")
 MANGA_OCR_PYENV_PIP_PATH = os.path.join(MANGA_OCR_PYENV_PATH, "bin", "pip")
+HUGGING_FACE_CACHE_PATH = os.path.join(os.environ["HOME"], '.cache', 'huggingface')
 CONFIG_PATH = os.path.join(
     os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ["HOME"], ".config")),
     "transformers_ocr",
@@ -372,6 +373,10 @@ def prog_name():
     return os.path.basename(sys.argv[0])
 
 
+def purge_manga_ocr_data():
+    shutil.rmtree(MANGA_OCR_PREFIX, ignore_errors=True)
+    shutil.rmtree(HUGGING_FACE_CACHE_PATH, ignore_errors=True)
+    print("Purged all downloaded manga-ocr data.")
 
 
 def create_args_parser() -> argparse.ArgumentParser:
@@ -408,6 +413,8 @@ You need to run '{prog_name()} download' once after installation.
     restart_parser = subparsers.add_parser("restart", help="Restart the program.")
     restart_parser.set_defaults(func=lambda _args: restart_listener())
 
+    nuke_parser = subparsers.add_parser("purge", help="Purge all manga-ocr data.", aliases=["nuke"])
+    nuke_parser.set_defaults(func=lambda _args: purge_manga_ocr_data())
 
     return parser
 
