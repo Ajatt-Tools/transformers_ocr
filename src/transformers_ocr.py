@@ -5,6 +5,7 @@
 import argparse
 import dataclasses
 import datetime
+import json
 import os
 import shutil
 import signal
@@ -14,7 +15,7 @@ import sys
 import tempfile
 import time
 from argparse import RawTextHelpFormatter
-from typing import AnyStr, Collection, IO
+from typing import AnyStr, Collection, IO, Iterable
 
 PROGRAM = "transformers_ocr"
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
@@ -30,6 +31,27 @@ CONFIG_PATH = os.path.join(
     "transformers_ocr",
     "config",
 )
+
+
+class MissingProgram(RuntimeError):
+    pass
+
+
+class StopRequested(Exception):
+    pass
+
+
+class ScreenshotCancelled(RuntimeError):
+    pass
+
+
+@dataclasses.dataclass
+class OcrCommand:
+    action: str
+    file_path: str | None
+
+    def as_json(self):
+        return json.dumps(dataclasses.asdict(self))
 
 
 def get_clip_copy_args():
@@ -63,19 +85,22 @@ def is_GNOME():
 
 
 def is_pacman_installed(program: str) -> bool:
-    return subprocess.call(["pacman", "-Qq", program], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
+    return subprocess.call(("pacman", "-Qq", program,), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, ) == 0
 
 
-def if_installed(*programs):
+def is_installed(program: str) -> bool:
+    return shutil.which(program) or is_pacman_installed(program)
+
+
+def raise_if_missing(*programs):
     for prog in programs:
-        if not shutil.which(prog) and not is_pacman_installed(prog):
-            notify_send(f"{prog} must be installed for {PROGRAM} to work.")
-            sys.exit(1)
+        if not is_installed(prog):
+            raise MissingProgram(f"{prog} must be installed for {PROGRAM} to work.")
 
 
 def gnome_screenshot_select(screenshot_path: str):
     return subprocess.run(
-        ("gnome-screenshot", "-a", "-f", screenshot_path),
+        ("gnome-screenshot", "-a", "-f", screenshot_path,),
         check=True,
     )
 
@@ -84,6 +109,7 @@ def maim_select(screenshot_path: str):
     return subprocess.run(
         ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
         check=True,
+        stderr=sys.stdout,
     )
 
 
@@ -96,13 +122,13 @@ def grim_select(screenshot_path: str):
 
 def take_screenshot(screenshot_path):
     if is_GNOME():
-        if_installed("gnome-screenshot", "wl-copy")
+        raise_if_missing("gnome-screenshot", "wl-copy")
         gnome_screenshot_select(screenshot_path)
     elif is_Xorg():
-        if_installed("maim", "xclip")
+        raise_if_missing("maim", "xclip")
         maim_select(screenshot_path)
     else:
-        if_installed("grim", "slurp", "wl-copy")
+        raise_if_missing("grim", "slurp", "wl-copy")
         grim_select(screenshot_path)
 
 
@@ -118,7 +144,7 @@ def run_ocr(command):
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as screenshot_file:
         take_screenshot(screenshot_file.name)
         with open(PIPE_PATH, "w") as pipe:
-            pipe.write(f"{command}::{screenshot_file.name}")
+            pipe.write(OcrCommand(action=command, file_path=screenshot_file.name).as_json())
 
 
 def is_running(pid: int) -> bool:
@@ -139,12 +165,12 @@ def ensure_listening():
     if os.path.exists(MANGA_OCR_PREFIX):
         if get_pid() is None:
             p = subprocess.Popen(
-                [
+                (
                     os.path.join(MANGA_OCR_PREFIX, "pyenv", "bin", "python3"),
                     __file__,
                     "start",
                     "--foreground",
-                ],
+                ),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -176,7 +202,7 @@ def kill_after(pid: int, timeout_s: float, step_s: float = 0.1):
 def stop_listening():
     if (pid := get_pid()) is not None:
         with open(PIPE_PATH, "w") as pipe:
-            pipe.write("stop::")
+            pipe.write(OcrCommand(action="stop", file_path=None).as_json())
         kill_after(pid, timeout_s=3)
     else:
         print("Already stopped.")
@@ -199,7 +225,10 @@ def to_clip(text: str, custom_clip_args: Collection[str] | None):
 
 def notify_send(msg: str):
     print(msg)
-    subprocess.Popen(("notify-send", "manga-ocr", msg), shell=False)
+    try:
+        subprocess.Popen(("notify-send", "manga-ocr", msg,), shell=False)
+    except FileNotFoundError:
+        pass
 
 
 def is_valid_key_val_pair(line: str) -> bool:
@@ -237,18 +266,8 @@ class TrOcrConfig:
             return screenshot_dir
 
 
-@dataclasses.dataclass
-class OcrCommand:
-    action: str
-    file_path: str
-
-
-class StopRequested(Exception):
-    pass
-
-
-def iter_commands(stream: IO):
-    yield from (OcrCommand(*line.strip().split("::")) for line in stream)
+def iter_commands(stream: IO) -> Iterable[OcrCommand]:
+    yield from (OcrCommand(**json.loads(line)) for line in stream)
 
 
 class MangaOcrWrapper:
@@ -265,6 +284,13 @@ class MangaOcrWrapper:
         print(f"Custom clip args: {self._config.clip_args}")
         return self
 
+    def _ocr(self, file_path: str) -> str:
+        return (
+            self._mocr(file_path)
+            .replace('...', '…')
+            .replace('。。。', '…')
+        )
+
     def _process_command(self, command: OcrCommand):
         match command:
             case OcrCommand("stop", _):
@@ -272,11 +298,11 @@ class MangaOcrWrapper:
             case OcrCommand(action=action, file_path=file_path) if os.path.isfile(file_path):
                 match action:
                     case "hold":
-                        text = self._mocr(file_path)
+                        text = self._ocr(file_path)
                         self._on_hold.append(text)
                         notify_send(f"Holding {text}")
                     case "recognize":
-                        text = SPACE.join((*self._on_hold, self._mocr(file_path)))
+                        text = SPACE.join((*self._on_hold, self._ocr(file_path)))
                         to_clip(text, custom_clip_args=self._config.clip_args)
                         notify_send(f"Copied {text}")
                         self._on_hold.clear()
@@ -330,15 +356,15 @@ def download_manga_ocr():
     print("Downloading manga-ocr...")
     os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
     subprocess.run(
-        ["python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH, ],
+        ("python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH,),
         check=True,
     )
     subprocess.run(
-        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "pip", ],
+        (MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "pip",),
         check=True,
     )
     subprocess.run(
-        [MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "manga-ocr", ],
+        (MANGA_OCR_PYENV_PIP_PATH, "install", "--upgrade", "manga-ocr",),
         check=True,
     )
     print("Downloaded manga-ocr.")
