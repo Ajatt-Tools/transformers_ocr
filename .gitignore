@@ -2,3 +2,4 @@
 /.vscode
 /transformers_ocr
 /out
+__pycache__/
