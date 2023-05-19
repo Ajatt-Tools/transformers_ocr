@@ -410,7 +410,7 @@ You need to run '{prog_name()} download' once after installation.
     status_parser = subparsers.add_parser("status", help="Print listening status.")
     status_parser.set_defaults(func=lambda _args: print_status())
 
-    restart_parser = subparsers.add_parser("restart", help="Restart the program.")
+    restart_parser = subparsers.add_parser("restart", help="Stop listening and start listening.")
     restart_parser.set_defaults(func=lambda _args: restart_listener())
 
     nuke_parser = subparsers.add_parser("purge", help="Purge all manga-ocr data.", aliases=["nuke"])
