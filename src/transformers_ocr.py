@@ -186,14 +186,13 @@ def ensure_listening():
 def kill_after(pid: int, timeout_s: float, step_s: float = 0.1):
     for _step in range(int(timeout_s // step_s)):
         if get_pid() is None:
-            print(" Stopped.")
             break
         time.sleep(step_s)
         print(".", end="", flush=True)
     try:
         os.kill(pid, signal.SIGKILL)
     except ProcessLookupError:
-        pass
+        print(" Stopped.")
     else:
         print(" Killed.")
 
@@ -313,9 +312,9 @@ class MangaOcrWrapper:
             name_pattern = datetime.datetime.now().strftime("trocr_%Y%m%d_%H%M%S")
             text_file_path = os.path.join(self._config.screenshot_dir, f'{name_pattern}.gt.txt')
             png_file_path = os.path.join(self._config.screenshot_dir, f'{name_pattern}.png')
+            shutil.copy(file_path, png_file_path)
             with open(text_file_path, 'w', encoding='utf8') as of:
                 of.write(text)
-            shutil.copy(file_path, png_file_path)
 
     def loop(self):
         try:
