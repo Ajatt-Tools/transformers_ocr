@@ -8,6 +8,7 @@ import datetime
 import enum
 import json
 import os
+import shlex
 import shutil
 import signal
 import stat
@@ -247,15 +248,15 @@ class TrOcrConfig:
     def __init__(self):
         self._config = get_config()
         self.force_cpu = self._should_force_cpu()
-        self.clip_args = self._custom_clip_args()
+        self.clip_args = self._key_to_cmd_args("clip_command")
         self.screenshot_dir = self._get_screenshot_dir()
 
     def _should_force_cpu(self) -> bool:
         return bool(self._config.get('force_cpu', 'no') in ('true', 'yes',))
 
-    def _custom_clip_args(self) -> list[str] | None:
+    def _key_to_cmd_args(self, key: str) -> list[str] | None:
         try:
-            return self._config["clip_command"].strip().split()
+            return shlex.split(self._config[key].strip())
         except (KeyError, AttributeError):
             return None
 
