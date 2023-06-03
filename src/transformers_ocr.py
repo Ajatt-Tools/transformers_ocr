@@ -114,7 +114,7 @@ def maim_select(screenshot_path: str):
     return subprocess.run(
         ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
         check=True,
-        stderr=subprocess.DEVNULL,
+        stderr=sys.stdout
     )
 
 
