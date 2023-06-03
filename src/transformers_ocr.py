@@ -103,6 +103,7 @@ def gnome_screenshot_select(screenshot_path: str):
         check=True,
     )
 
+
 def spectactle_select(screenshot_path: str):
     return subprocess.run(
         ("spectacle", "-b", "-r", "-o", screenshot_path,),
@@ -110,11 +111,12 @@ def spectactle_select(screenshot_path: str):
         stderr=subprocess.DEVNULL
     )
 
+
 def maim_select(screenshot_path: str):
     return subprocess.run(
         ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
         check=True,
-        stderr=sys.stdout
+        stderr=sys.stdout,
     )
 
 
