@@ -67,6 +67,14 @@ Install the following dependencies if they are not installed.
 
 </details>
 
+<summary>KDE</summary>
+
+* [pip](https://pypi.org/project/pip/)
+* [spectactle](https://github.com/KDE/spectacle/)
+* [wl-copy](https://github.com/bugaevc/wl-clipboard)
+
+</details>
+
 **Install using Makefile:**
 
 ```
@@ -167,10 +175,14 @@ which allows you to send recognized text directly to GoldenDict
 and keep the system clipboard for other tasks.
 
 ```
-echo 'clip_command=goldendict' >> ~/.config/transformers_ocr/config
+echo 'clip_command=goldendict %TEXT%' >> ~/.config/transformers_ocr/config
 transformers_ocr stop
 transformers_ocr start
 ```
+
+If `%TEXT%` is passed as a parameter,
+it will be replaced with the actual text in the speech bubble.
+If not, the text will be passed to `stdin` of the called program.
 
 ## Force CPU
 
