@@ -67,6 +67,8 @@ Install the following dependencies if they are not installed.
 
 </details>
 
+<details>
+
 <summary>KDE</summary>
 
 * [pip](https://pypi.org/project/pip/)
