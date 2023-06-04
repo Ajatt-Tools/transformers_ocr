@@ -8,6 +8,7 @@ import datetime
 import enum
 import json
 import os
+import shlex
 import shutil
 import signal
 import stat
@@ -16,7 +17,7 @@ import sys
 import tempfile
 import time
 from argparse import RawTextHelpFormatter
-from typing import AnyStr, Collection, IO, Iterable
+from typing import AnyStr, IO, Iterable
 
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
 MANGA_OCR_PYENV_PATH = os.path.join(MANGA_OCR_PREFIX, "pyenv")
@@ -33,15 +34,18 @@ PROGRAM = "transformers_ocr"
 JOIN = "、"
 IS_XORG = "WAYLAND_DISPLAY" not in os.environ
 IS_GNOME = os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
+IS_KDE = os.environ.get("XDG_CURRENT_DESKTOP") == "KDE"
 CLIP_COPY_ARGS = (
     ("xclip", "-selection", "clipboard",)
     if IS_XORG
     else ("wl-copy",)
 )
+CLIP_TEXT_PLACEHOLDER = '%TEXT%'
 
 
 class Platform(enum.Enum):
     GNOME = enum.auto()
+    KDE = enum.auto()
     Xorg = enum.auto()
     Wayland = enum.auto()
 
@@ -49,6 +53,8 @@ class Platform(enum.Enum):
     def current(cls):
         if IS_GNOME:
             return cls.GNOME
+        elif IS_KDE:
+            return cls.KDE
         elif IS_XORG:
             return cls.Xorg
         else:
@@ -94,13 +100,24 @@ def raise_if_missing(*programs):
 
 
 def gnome_screenshot_select(screenshot_path: str):
+    raise_if_missing("gnome-screenshot")
     return subprocess.run(
         ("gnome-screenshot", "-a", "-f", screenshot_path,),
         check=True,
     )
 
 
+def spectactle_select(screenshot_path: str):
+    raise_if_missing("spectacle")
+    return subprocess.run(
+        ("spectacle", "-b", "-r", "-o", screenshot_path,),
+        check=True,
+        stderr=subprocess.DEVNULL
+    )
+
+
 def maim_select(screenshot_path: str):
+    raise_if_missing("maim")
     return subprocess.run(
         ("maim", "--select", "--hidecursor", "--format=png", "--quality", "1", screenshot_path,),
         check=True,
@@ -109,6 +126,7 @@ def maim_select(screenshot_path: str):
 
 
 def grim_select(screenshot_path: str):
+    raise_if_missing("grim", "slurp")
     return subprocess.run(
         ("grim", "-g", subprocess.check_output(["slurp"]).decode().strip(), screenshot_path,),
         check=True,
@@ -118,13 +136,12 @@ def grim_select(screenshot_path: str):
 def take_screenshot(screenshot_path):
     match CURRENT_PLATFORM:
         case Platform.GNOME:
-            raise_if_missing("gnome-screenshot", "wl-copy")
             gnome_screenshot_select(screenshot_path)
+        case Platform.KDE:
+            spectactle_select(screenshot_path)
         case Platform.Xorg:
-            raise_if_missing("maim", "xclip")
             maim_select(screenshot_path)
         case Platform.Wayland:
-            raise_if_missing("grim", "slurp", "wl-copy")
             grim_select(screenshot_path)
 
 
@@ -214,14 +231,6 @@ def is_fifo(path: AnyStr) -> bool:
         return False
 
 
-def to_clip(text: str, custom_clip_args: Collection[str] | None):
-    if custom_clip_args is None:
-        p = subprocess.Popen(CLIP_COPY_ARGS, stdin=subprocess.PIPE)
-        p.communicate(input=text.encode())
-    else:
-        subprocess.Popen([*custom_clip_args, text], shell=False)
-
-
 def notify_send(msg: str):
     print(msg)
     try:
@@ -302,11 +311,33 @@ class MangaOcrWrapper:
                         notify_send(f"Holding {text}")
                     case "recognize":
                         text = JOIN.join((*self._on_hold, self._ocr(file_path)))
-                        to_clip(text, custom_clip_args=self._config.clip_args)
-                        notify_send(f"Copied {text}")
+                        self._to_clip(text)
                         self._on_hold.clear()
                         self._maybe_save_result(file_path, text)
                 os.remove(file_path)
+
+    def _to_clip(self, text: str):
+        cmd_args = list(self._config.clip_args or CLIP_COPY_ARGS)
+        try:
+            placeholder_position = cmd_args.index(CLIP_TEXT_PLACEHOLDER)
+            pass_text_to_stdin = False
+            cmd_args[placeholder_position] = text
+        except ValueError:
+            pass_text_to_stdin = True
+
+        try:
+            raise_if_missing(cmd_args[0])
+            p = subprocess.Popen(
+                cmd_args,
+                stdin=(subprocess.PIPE if pass_text_to_stdin else None),
+                shell=False
+            )
+            if pass_text_to_stdin:
+                p.communicate(input=text.encode())
+        except MissingProgram as ex:
+            notify_send(str(ex))
+        else:
+            notify_send(f"Copied {text}")
 
     def _maybe_save_result(self, file_path, text):
         if self._config.screenshot_dir:
