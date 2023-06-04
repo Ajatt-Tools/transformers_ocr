@@ -72,7 +72,7 @@ Install the following dependencies if they are not installed.
 <summary>KDE</summary>
 
 * [pip](https://pypi.org/project/pip/)
-* [spectactle](https://github.com/KDE/spectacle/)
+* [spectacle](https://github.com/KDE/spectacle/)
 * [wl-copy](https://github.com/bugaevc/wl-clipboard)
 
 </details>
