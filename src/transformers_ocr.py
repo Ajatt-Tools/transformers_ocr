@@ -386,7 +386,7 @@ def download_manga_ocr():
     print("Downloading manga-ocr...")
     os.makedirs(MANGA_OCR_PREFIX, exist_ok=True)
     subprocess.run(
-        ("python3", "-m", "venv", "--system-site-packages", "--symlinks", MANGA_OCR_PYENV_PATH,),
+        ("python3", "-m", "venv", "--symlinks", MANGA_OCR_PYENV_PATH,),
         check=True,
     )
     subprocess.run(
