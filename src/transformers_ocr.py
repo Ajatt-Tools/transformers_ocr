@@ -296,6 +296,7 @@ class MangaOcrWrapper:
             self._mocr(file_path)
             .replace('...', '…')
             .replace('。。。', '…')
+            .replace('．．．', '…')
         )
 
     def _process_command(self, command: OcrCommand):
