@@ -30,11 +30,11 @@ If you want to package this program for your distribution and know how to do it,
 please create a pull request.
 Otherwise, read the section below.
 
-### To install manually
+### To install manually (not recommended)
 
 The steps below are for people who can't access the AUR.
 
-Install the following dependencies if they are not installed.
+**Step 1.** Install the following dependencies if they are not installed.
 
 <details>
 
@@ -77,7 +77,7 @@ Install the following dependencies if they are not installed.
 
 </details>
 
-**Install using Makefile:**
+**Step 2.** Install the program using Makefile.
 
 ```
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git'
