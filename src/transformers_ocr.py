@@ -330,7 +330,8 @@ class MangaOcrWrapper:
             p = subprocess.Popen(
                 cmd_args,
                 stdin=(subprocess.PIPE if pass_text_to_stdin else None),
-                shell=False
+                shell=False,
+                start_new_session=True,
             )
             if pass_text_to_stdin:
                 p.communicate(input=text.encode())
