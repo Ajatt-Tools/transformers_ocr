@@ -110,7 +110,7 @@ def gnome_screenshot_select(screenshot_path: str):
 def spectactle_select(screenshot_path: str):
     raise_if_missing("spectacle")
     return subprocess.run(
-        ("spectacle", "-b", "-r", "-o", screenshot_path,),
+        ("spectacle", "-n", "-b", "-r", "-o", screenshot_path,),
         check=True,
         stderr=subprocess.DEVNULL
     )
