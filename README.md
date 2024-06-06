@@ -79,7 +79,7 @@ The steps below are for people who can't access the AUR.
 
 **Step 2.** Install the program using Makefile.
 
-```
+```bash
 git clone 'https://github.com/Ajatt-Tools/transformers_ocr.git'
 cd -- 'transformers_ocr'
 sudo make install
@@ -90,7 +90,7 @@ sudo make install
 Before you start,
 download `manga-ocr` data:
 
-```
+```bash
 transformers_ocr download
 ```
 
@@ -102,7 +102,7 @@ To show a help page, run `transformers_ocr help`.
 
 To OCR text on a manga page, run:
 
-```
+```bash
 transformers_ocr recognize
 ```
 
@@ -123,7 +123,7 @@ On the first run `transformers_ocr` launches a listener process
 that is running is the background and reads any new screenshots passed to it.
 To speed up the first run, add the command below to autostart (using `~/.profile`, `~/.xinitrc`, etc.).
 
-```
+```bash
 transformers_ocr start
 ```
 
@@ -160,13 +160,28 @@ The list of saved bubbles will be emptied when calling `recognize`.
 
 Optionally, you can create a config file.
 
-```
+```bash
 mkdir -p ~/.config/transformers_ocr
 touch ~/.config/transformers_ocr/config
 ```
 
 Each line must have this format: `key=value`.
 Lines that start with `#` are ignored.
+
+## Pass Image path
+
+The `--image-path` argument can be used to manually parse image files
+rather than to rely on a screenshot taking application.
+Or, it can be used to add support to other screenshot taking applications.
+
+Example usage in zsh:
+
+```bash
+flameshot_path=$(mktemp -u --suffix .png)
+# cli usage for flameshot with no copy
+flameshot gui --path "$flameshot_path" --delay 100
+transformers_ocr recognize --image-path "$flameshot_path"
+```
 
 ## Send text to an external application
 
@@ -176,7 +191,7 @@ In the example below `clip_command` is set to `goldendict`
 which allows you to send recognized text directly to GoldenDict
 and keep the system clipboard for other tasks.
 
-```
+```bash
 echo 'clip_command=goldendict %TEXT%' >> ~/.config/transformers_ocr/config
 transformers_ocr stop
 transformers_ocr start
@@ -190,6 +205,6 @@ If not, the text will be passed to `stdin` of the called program.
 
 If you want to force CPU.
 
-```
+```bash
 echo 'force_cpu=yes' >> ~/.config/transformers_ocr/config
 ```
