@@ -152,15 +152,22 @@ def prepare_pipe():
         os.mkfifo(PIPE_PATH)
 
 
-def run_ocr(command):
+def run_ocr(command, image_path=None):
+    def write_command_to_pipe(command, path):
+        with open(PIPE_PATH, "w") as pipe:
+            pipe.write(OcrCommand(action=command, file_path=path).as_json())
+
     ensure_listening()
+    if image_path is not None:
+        write_command_to_pipe(command, image_path)
+        return
+
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as screenshot_file:
         try:
             take_screenshot(screenshot_file.name)
         except subprocess.CalledProcessError as ex:
             raise ScreenshotCancelled() from ex
-        with open(PIPE_PATH, "w") as pipe:
-            pipe.write(OcrCommand(action=command, file_path=screenshot_file.name).as_json())
+        write_command_to_pipe(command, screenshot_file.name)
 
 
 def is_running(pid: int) -> bool:
@@ -424,10 +431,12 @@ You need to run '{prog_name()} download' once after installation.
     subparsers = parser.add_subparsers(title="commands")
 
     recognize_parser = subparsers.add_parser("recognize", help="OCR a part of the screen.", aliases=["ocr"])
-    recognize_parser.set_defaults(func=lambda _args: run_ocr("recognize"))
+    recognize_parser.add_argument("--image-path", help="Path to image to parse.", metavar="<path>", default=None)
+    recognize_parser.set_defaults(func=lambda args: run_ocr("recognize", image_path=args.image_path))
 
     hold_parser = subparsers.add_parser("hold", help="OCR and hold a part of the screen.")
-    hold_parser.set_defaults(func=lambda _args: run_ocr("hold"))
+    hold_parser.add_argument("--image-path", help="Path to image to parse.", metavar="<path>", default=None)
+    hold_parser.set_defaults(func=lambda args: run_ocr("hold", image_path=args.image_path))
 
     download_parser = subparsers.add_parser("download", help="Download OCR files.")
     download_parser.set_defaults(func=lambda _args: download_manga_ocr())
