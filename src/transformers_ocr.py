@@ -435,7 +435,8 @@ You need to run '{prog_name()} download' once after installation.
     recognize_parser.set_defaults(func=lambda args: run_ocr("recognize", image_path=args.image_path))
 
     hold_parser = subparsers.add_parser("hold", help="OCR and hold a part of the screen.")
-    hold_parser.set_defaults(func=lambda _args: run_ocr("hold"))
+    hold_parser.add_argument("--image-path", help="Path to image to parse.", metavar="<path>", default=None)
+    hold_parser.set_defaults(func=lambda args: run_ocr("hold", image_path=args.image_path))
 
     download_parser = subparsers.add_parser("download", help="Download OCR files.")
     download_parser.set_defaults(func=lambda _args: download_manga_ocr())
