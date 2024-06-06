@@ -17,7 +17,7 @@ import sys
 import tempfile
 import time
 from argparse import RawTextHelpFormatter
-from typing import AnyStr, IO, Iterable
+from typing import AnyStr, IO, Iterable, Optional
 
 MANGA_OCR_PREFIX = os.path.join(os.environ["HOME"], ".local", "share", "manga_ocr")
 MANGA_OCR_PYENV_PATH = os.path.join(MANGA_OCR_PREFIX, "pyenv")
@@ -152,11 +152,12 @@ def prepare_pipe():
         os.mkfifo(PIPE_PATH)
 
 
-def run_ocr(command, image_path=None):
-    def write_command_to_pipe(command, path):
-        with open(PIPE_PATH, "w") as pipe:
-            pipe.write(OcrCommand(action=command, file_path=path).as_json())
+def write_command_to_pipe(command: str, file_path: str):
+    with open(PIPE_PATH, "w") as pipe:
+        pipe.write(OcrCommand(action=command, file_path=file_path).as_json())
 
+
+def run_ocr(command: str, image_path: Optional[str] = None) -> None:
     ensure_listening()
     if image_path is not None:
         write_command_to_pipe(command, image_path)
