@@ -77,6 +77,16 @@ The steps below are for people who can't access the AUR.
 
 </details>
 
+<details>
+
+<summary>XFCE</summary>
+
+* [pip](https://pypi.org/project/pip/)
+* [xfce4-screenshooter](https://gitlab.xfce.org/apps/xfce4-screenshooter)
+* [xclip](https://github.com/astrand/xclip)
+
+</details>
+
 **Step 2.** Install the program using Makefile.
 
 ```bash

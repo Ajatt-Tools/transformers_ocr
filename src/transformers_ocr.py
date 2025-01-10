@@ -35,6 +35,7 @@ JOIN = "、"
 IS_XORG = "WAYLAND_DISPLAY" not in os.environ
 IS_GNOME = os.environ.get("XDG_CURRENT_DESKTOP") == "GNOME"
 IS_KDE = os.environ.get("XDG_CURRENT_DESKTOP") == "KDE"
+IS_XFCE = os.environ.get("XDG_CURRENT_DESKTOP") == "XFCE"
 CLIP_COPY_ARGS = (
     ("xclip", "-selection", "clipboard",)
     if IS_XORG
@@ -46,6 +47,7 @@ CLIP_TEXT_PLACEHOLDER = '%TEXT%'
 class Platform(enum.Enum):
     GNOME = enum.auto()
     KDE = enum.auto()
+    XFCE = enum.auto()
     Xorg = enum.auto()
     Wayland = enum.auto()
 
@@ -55,6 +57,8 @@ class Platform(enum.Enum):
             return cls.GNOME
         elif IS_KDE:
             return cls.KDE
+        elif IS_XFCE:
+            return cls.XFCE
         elif IS_XORG:
             return cls.Xorg
         else:
@@ -115,6 +119,13 @@ def spectactle_select(screenshot_path: str):
         stderr=subprocess.DEVNULL
     )
 
+def xfce_screenshooter_select(screenshot_path: str):
+    raise_if_missing("xfce4-screenshooter")
+    return subprocess.run(
+        ("xfce4-screenshooter", "-r", "-s", screenshot_path,),
+        check=True,
+        stderr=subprocess.DEVNULL
+    )
 
 def maim_select(screenshot_path: str):
     raise_if_missing("maim")
@@ -139,6 +150,8 @@ def take_screenshot(screenshot_path):
             gnome_screenshot_select(screenshot_path)
         case Platform.KDE:
             spectactle_select(screenshot_path)
+        case Platform.XFCE:
+            xfce_screenshooter_select(screenshot_path)
         case Platform.Xorg:
             maim_select(screenshot_path)
         case Platform.Wayland:
